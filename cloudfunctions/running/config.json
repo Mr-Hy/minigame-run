@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "openapi": ["subscribeMessage.send"]
+  },
+  "triggers": [
+    { "name": "dispatchLossNotices", "type": "timer", "config": "0 * * * * * *" }
+  ]
+}

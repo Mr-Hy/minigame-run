@@ -1,0 +1,78 @@
+<view class="run-page">
+  <map id="park-map" class="park-map" latitude="{{latitude}}" longitude="{{longitude}}" scale="{{initialZoom}}"
+    min-scale="{{11}}" show-location="{{locationEnabled}}" show-compass="{{true}}"
+    polygons="{{polygons}}" polyline="{{polylines}}" circles="{{circles}}" markers="{{markers}}"
+    bindtap="selectTerritory" bindpoitap="selectTerritory" bindmarkertap="selectMarker" bindcallouttap="selectMarker"
+    bindregionchange="regionChanged" enable-rotate="{{false}}" enable-overlooking="{{false}}">
+    <cover-view slot="callout">
+      <cover-view wx:for="{{ownerCallouts}}" wx:key="id" marker-id="{{item.id}}" data-id="{{item.id}}"
+        class="owner-flag" style="width: {{item.pillWidth + (item.avatar ? 20 : 0)}}px; height: {{item.avatar ? 24 : 18}}px;" catchtap="selectMarker">
+        <cover-view wx:if="{{item.avatar}}" class="owner-portrait">
+          <cover-image class="owner-photo" src="{{item.avatar}}" binderror="markerAvatarError" data-avatar="{{item.avatar}}"/>
+        </cover-view>
+        <cover-view class="owner-nickname {{item.avatar ? 'beside-portrait' : ''}}" style="width: {{item.pillWidth}}px;">{{item.nickname}}</cover-view>
+      </cover-view>
+    </cover-view>
+  </map>
+
+  <view class="map-overlay">
+    <view class="territory-panel">
+      <view class="section-head">
+        <view class="heading">{{locationEnabled ? '附近领地' : '地图领地'}}<text class="map-count" wx:if="{{mapLoaded}}">{{mapCount}} 片</text></view>
+        <view class="legend">
+          <view class="legend-entry" wx:if="{{signedIn}}"><view class="swatch mine"></view>我的</view>
+          <view class="legend-entry"><view class="swatch other"></view>{{signedIn ? '他人' : '已占领'}}</view>
+        </view>
+      </view>
+      <view class="territory-info issue" wx:if="{{locationError}}">{{locationError}}</view>
+      <view class="territory-info" wx:elif="{{locating}}">正在获取当前位置…</view>
+      <view class="territory-info" wx:if="{{selection}}">
+        <view class="territory-title">{{selection.label}}<text class="territory-area">{{selection.area}}</text></view>
+        <text>{{selection.detail}}</text>
+      </view>
+      <view class="territory-info issue" wx:elif="{{mapError}}">{{mapError}}</view>
+      <view class="territory-info" wx:elif="{{mapLoading}}">正在读取附近领地…</view>
+      <view class="territory-info" wx:elif="{{mapLoaded}}">{{mapCount ? '点选领地，可查看面积和守地配速。' : '这片区域目前都是空地。'}}</view>
+      <view class="territory-info" wx:else>点「刷新」查看附近领地。</view>
+    </view>
+
+    <view class="map-tools">
+      <button class="tool" bindtap="locate" disabled="{{locating}}" aria-label="回到定位"><view class="locate-icon" aria-hidden="true"></view>{{locating ? '定位中' : '定位'}}</button>
+      <button class="tool" bindtap="refreshMap" disabled="{{mapLoading}}" aria-label="刷新附近领地"><view class="refresh-icon" aria-hidden="true"></view>刷新</button>
+    </view>
+
+    <view class="run-dock {{signedIn || actionError ? 'run-panel' : 'guest-dock'}}">
+      <view class="run-controls">
+        <view class="run-summary" wx:if="{{signedIn}}">
+          <view class="activity-head">
+            <text class="activity-title">本次跑步</text>
+            <view class="phase {{phase === 'running' ? 'phase-live' : ''}}"><view class="phase-dot"></view>{{phaseLabel}}</view>
+          </view>
+          <view class="metrics">
+            <view class="metric"><text class="value">{{distanceText}}</text><text class="unit">里程 · 公里</text></view>
+            <view class="metric"><text class="value">{{elapsedText}}</text><text class="unit">用时 · 分:秒</text></view>
+            <view class="metric"><text class="value">{{paceText}}</text><text class="unit">配速 · 分/公里</text></view>
+          </view>
+        </view>
+        <button class="primary" wx:if="{{phase === 'idle'}}" bindtap="startRun" disabled="{{starting}}" loading="{{starting}}">
+          <view class="start-run-icon" wx:if="{{!starting}}" aria-hidden="true">
+            <image class="start-run-stride" src="/assets/run-stride.png" mode="scaleToFill" aria-hidden="true" />
+          </view>{{starting ? '准备中' : '开始跑步'}}
+        </button>
+        <button class="primary end" wx:elif="{{phase === 'running'}}" bindtap="endRun">结束并结算</button>
+        <button class="primary" wx:elif="{{phase === 'pending'}}" bindtap="endRun">重试结算</button>
+        <button class="primary working" wx:else disabled="{{true}}" loading="{{true}}">{{phase === 'locating' ? '定位中' : '结算中'}}</button>
+      </view>
+      <block wx:if="{{signedIn}}">
+        <view class="instruction" wx:if="{{phase === 'idle' || (phase === 'running' && !runMessage)}}">
+          <view>有效里程满 300 米才计入跑步记录。</view>
+          <view>如要圈地，请绕一圈，在距起点 30 米内结束跑步。</view>
+        </view>
+        <view class="instruction" wx:if="{{runMessage && runMessage !== actionError}}">{{runMessage}}</view>
+      </block>
+      <view class="notice" wx:if="{{actionError}}">{{actionError}}</view>
+      <button class="text-action" wx:if="{{signedIn && permissionDenied}}" bindtap="openSettings">打开定位授权设置</button>
+      <button class="text-action" wx:if="{{signedIn && phase === 'idle' && hasResult}}" bindtap="openResult">查看上次结算</button>
+    </view>
+  </view>
+</view>

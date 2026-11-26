@@ -1,0 +1,93 @@
+<view class="profile-page">
+  <view class="identity">
+    <view class="avatar">
+      <image wx:if="{{!avatar || loadedAvatar !== avatar}}" class="avatar-symbol" src="/assets/me-active.png" mode="aspectFit" />
+      <image wx:if="{{avatar}}" class="avatar-image {{loadedAvatar === avatar ? 'avatar-ready' : ''}}" src="{{avatar}}" mode="aspectFill"
+        data-src="{{avatar}}" bindload="avatarLoaded" binderror="avatarFailed" />
+    </view>
+    <view class="identity-copy">
+      <text class="profile-name">{{playerId ? (name || '跑者') : (hasSavedLogin ? '跑者' : '游客跑者')}}</text>
+      <text class="profile-note">{{runnerNumber ? '跑者编号 ' + runnerNumber : (loading ? '正在读取资料…' : (playerId ? '已连接微信' : (hasSavedLogin ? '微信身份待验证' : '微信登录后同步跑步记录')))}}</text>
+    </view>
+    <button wx:if="{{playerId}}" class="identity-action" bindtap="toggleManage" disabled="{{!!busy}}" aria-expanded="{{manageOpen}}">
+      <text>{{manageOpen ? '收起资料' : '管理资料'}}</text><view class="chevron {{manageOpen ? 'up' : 'down'}}"></view>
+    </button>
+    <button wx:elif="{{!hasSavedLogin}}" class="identity-action login" bindtap="openLogin">微信登录</button>
+  </view>
+
+  <view wx:if="{{manageOpen && playerId}}" class="management">
+    <form wx:if="{{editingNickname}}" class="nickname-form" bindsubmit="saveNickname">
+      <text class="field-label">修改昵称</text>
+      <input class="nickname-input" type="nickname" name="nickname" value="{{nicknameDraft}}" maxlength="-1"
+        placeholder="输入昵称或选用微信昵称" aria-label="昵称" focus="{{true}}" disabled="{{!!busy}}"/>
+      <text wx:if="{{nicknameError}}" class="error-text">{{nicknameError}}</text>
+      <view class="nickname-actions">
+        <button class="quiet-button" bindtap="cancelNicknameEdit" disabled="{{!!busy}}">取消</button>
+        <button class="identity-action login" form-type="submit" loading="{{busy === 'nickname'}}" disabled="{{!!busy}}">保存昵称</button>
+      </view>
+    </form>
+    <button wx:else class="manage-row" bindtap="editNickname" disabled="{{!!busy}}"><text>修改昵称</text><view class="chevron"></view></button>
+    <button class="manage-row" open-type="chooseAvatar" bindchooseavatar="updateAvatar" loading="{{busy === 'avatar'}}" disabled="{{!!busy}}">
+      <text>更换微信头像</text><view class="chevron"></view>
+    </button>
+    <button class="manage-row logout" bindtap="logout" loading="{{busy === 'logout'}}" disabled="{{!!busy}}">退出登录</button>
+  </view>
+  <view wx:if="{{error}}" class="error-row">
+    <text>{{error}}</text>
+    <button wx:if="{{hasSavedLogin}}" class="quiet-button" bindtap="loadMe" disabled="{{!!busy}}">重试</button>
+  </view>
+
+  <navigator class="journal {{hasSavedLogin ? '' : 'cover'}}" url="/pages/run-stats/index" hover-class="journal-pressed">
+    <view class="track-window" aria-hidden="true">
+      <view class="track">
+        <view class="lane lane-one"></view><view class="lane lane-two"></view>
+        <view class="lane lane-three"></view><view class="lane lane-four"></view>
+        <view class="finish-mark"></view>
+      </view>
+    </view>
+    <view class="journal-main">
+      <text class="journal-title">跑步手记</text>
+      <block wx:if="{{hasSavedLogin}}">
+        <text class="mileage-label">累计里程</text>
+        <view class="mileage"><text class="distance">{{running ? running.distance : '—'}}</text><text class="distance-unit">公里</text></view>
+      </block>
+      <text wx:else class="cover-copy">按周、月和年度回看里程与配速</text>
+    </view>
+    <view class="journal-footer">
+      <view class="journal-totals" wx:if="{{hasSavedLogin}}">
+        <view><text class="total-caption">累计跑步</text><text class="total-value">{{running ? running.count : '—'}} 次</text></view>
+        <view><text class="total-caption">总用时</text><text class="total-value">{{running ? running.duration : '—'}}</text></view>
+      </view>
+      <view class="journal-link"><text>查看统计</text><view class="journal-arrow"><view class="chevron"></view></view></view>
+    </view>
+  </navigator>
+
+  <navigator class="achievement-entry" url="/pages/achievements/index" hover-class="achievement-pressed">
+    <image class="achievement-medal" src="/assets/achievement-medal.png" mode="aspectFit" aria-hidden="true" />
+    <view class="land-copy"><text class="row-title">我的成就</text><text class="row-detail">个人最佳纪录与累计里程碑</text></view>
+    <view class="chevron"></view>
+  </navigator>
+
+  <text class="section-title">我的领地</text>
+  <view class="land-panel">
+    <button class="land-row" bindtap="openMap" hover-class="row-pressed">
+      <view class="land-icon"><image src="/assets/park-active.png" mode="aspectFit" /></view>
+      <view class="land-copy">
+        <text class="row-title">领地地图</text>
+        <text class="row-detail">{{me ? '已占 ' + me.count + ' 块 · ' + me.area : '查看附近的跑者和地块'}}</text>
+      </view>
+      <view class="chevron"></view>
+    </button>
+    <navigator class="land-row" url="/pages/reports/index" hover-class="row-pressed">
+      <view class="land-icon icon-reports" aria-hidden="true"><view class="report-sheet"><view></view><view></view></view></view>
+      <view class="land-copy"><text class="row-title">领地战报</text><text class="row-detail">查看失地记录和微信提醒</text></view>
+      <view class="chevron"></view>
+    </navigator>
+  </view>
+  <navigator wx:if="{{showRunTest}}" class="test-entry" url="/pages/demo/index" hover-class="row-pressed">
+    <text>跑步测试</text><view class="chevron"></view>
+  </navigator>
+  <navigator wx:if="{{showRunTest}}" class="test-entry" url="/pages/achievement-preview/index" hover-class="row-pressed">
+    <text>成就弹窗测试</text><view class="chevron"></view>
+  </navigator>
+</view>

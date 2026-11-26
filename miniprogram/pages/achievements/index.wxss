@@ -1,0 +1,82 @@
+.album-page {
+  max-width: 840rpx; box-sizing: border-box; margin: 0 auto;
+  padding: 14rpx 28rpx calc(44rpx + env(safe-area-inset-bottom));
+  color: #193e2e;
+}
+.album-page button { margin: 0; border: 0; border-radius: 0; padding: 0; line-height: inherit; background: transparent; color: inherit; }
+.album-page button::after { border: 0; }
+.album-cover {
+  position: relative; overflow: hidden; min-height: 250rpx; border-radius: 22rpx;
+  background: linear-gradient(111deg, #153d30 7%, #245540 72%, #34644c);
+  box-shadow: inset 0 0 0 1rpx rgba(255,255,255,.13);
+}
+.cover-body { position: relative; z-index: 1; width: 58%; padding: 31rpx 0 30rpx 34rpx; }
+.cover-title { display: block; color: #fff5d9; font-family: "Songti SC","Noto Serif CJK SC",serif; font-size: 43rpx; font-weight: 700; line-height: 1.28; letter-spacing: 2rpx; }
+.cover-score { display: flex; align-items: baseline; margin-top: 15rpx; color: #fff7df; line-height: 1; font-variant-numeric: tabular-nums; }
+.unlocked { font-family: Georgia,serif; font-size: 82rpx; font-weight: normal; }
+.available { margin-left: 10rpx; font-size: 31rpx; font-weight: 500; color: #c8d6b7; }
+.cover-caption, .cover-summary { display: block; font-size: 23rpx; color: #e6eaca; line-height: 1.5; }
+.cover-caption { margin-top: 5rpx; }
+.cover-summary { margin: 16rpx 0 21rpx; }
+.album-page .login-button { display: inline-flex; width: auto; align-items: center; gap: 14rpx; padding: 0 20rpx; min-height: 62rpx; border-radius: 8rpx; color: #173c2c; background: #ecdeb2; font-size: 23rpx; font-weight: 600; }
+.cover-medal { position: absolute; z-index: 1; right: 25rpx; top: -30rpx; width: 231rpx; height: 277rpx; transform: rotate(-8deg); }
+.terrain { position: absolute; right: -170rpx; bottom: -298rpx; width: 575rpx; height: 520rpx; transform: rotate(-24deg); }
+.terrain view { position: absolute; inset: 0; border: 2rpx solid rgba(226,224,169,.17); border-radius: 48% 29% 40% 47%; }
+.terrain view:nth-child(2) { inset: 19rpx; }
+.terrain view:nth-child(3) { inset: 39rpx; }
+.terrain view:nth-child(4) { inset: 60rpx; }
+.terrain view:nth-child(5) { inset: 83rpx; }
+.arrow { flex: none; width: 10rpx; height: 10rpx; border-right: 2rpx solid currentColor; border-top: 2rpx solid currentColor; transform: rotate(45deg); }
+.tab-bar { position: sticky; z-index: 2; top: 0; display: flex; gap: 36rpx; align-items: stretch; padding-top: 15rpx; border-bottom: 1rpx solid #d3daca; background: #f7f6ef; }
+.album-page .album-tab { position: relative; display: flex; width: auto; align-items: center; gap: 9rpx; min-height: 83rpx; color: #657265; font-size: 28rpx; font-weight: 550; }
+.album-page .album-tab.active { color: #1d503a; font-weight: 700; }
+.album-tab.active::before { position: absolute; right: 0; bottom: -1rpx; left: 0; height: 5rpx; border-radius: 4rpx 4rpx 0 0; background: #35664a; content: ''; }
+.tab-count { display: inline-flex; align-items: center; padding: 3rpx 9rpx; border-radius: 20rpx; background: #ebece2; font-size: 19rpx; line-height: 1.3; font-weight: 550; font-variant-numeric: tabular-nums; }
+.active .tab-count { color: #33583b; background: #dce7d1; }
+.record-group { margin-top: 29rpx; }
+.section-heading { display: flex; align-items: center; gap: 16rpx; margin: 0 3rpx 14rpx; font-size: 27rpx; line-height: 1.45; font-weight: 700; }
+.section-rule { flex: 1; height: 1rpx; background: #dce0d2; }
+.record-case, .milestone { overflow: hidden; border: 1rpx solid #dce0d2; border-radius: 18rpx; background: #fffef8; }
+.album-page .record-row { display: flex; align-items: center; gap: 16rpx; width: 100%; box-sizing: border-box; padding: 19rpx 19rpx; text-align: left; }
+.record-row + .record-row { border-top: 1rpx solid #e5e8dd; }
+.album-page .record-row[disabled] { opacity: 1; background: transparent; color: #193e2e; }
+.album-page .row-hover { background: #f0f2e7; }
+.stamp { position: relative; display: flex; box-sizing: border-box; width: 67rpx; height: 67rpx; flex-shrink: 0; align-items: center; justify-content: center; border: 1rpx solid #becbb3; border-radius: 50%; background: #e7eddc; }
+.stamp::before { position: absolute; inset: 4rpx; border: 1rpx solid #cbd6bb; border-radius: 50%; content: ''; }
+.stamp image { width: 37rpx; height: 37rpx; }
+.pending .stamp { border-color: #d5d9c9; background: #f0f1e6; }
+.pending .stamp::before { border-color: #e1e4d6; }
+.pending .stamp image { opacity: .74; }
+.record-text, .milestone-title-wrap { flex: 1; min-width: 0; }
+.record-title, .record-rule, .record-date, .tier-status, .milestone-rule, .next-tier { display: block; }
+.record-title { font-size: 28rpx; font-weight: 650; line-height: 1.38; }
+.record-rule, .milestone-rule { margin-top: 4rpx; color: #657160; font-size: 22rpx; line-height: 1.5; }
+.result-block { text-align: right; flex: none; max-width: 37%; }
+.result-value, .milestone-value { font-size: 32rpx; font-weight: 650; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.result-unit { display: inline-block; margin-left: 4rpx; font-size: 19rpx; font-weight: 500; }
+.record-date { color: #677360; margin-top: 5rpx; font-size: 19rpx; }
+.not-earned { color: #6e7567; font-size: 21rpx; flex: none; }
+.row-arrow { width: 8rpx; height: 8rpx; margin-left: -8rpx; color: #8c9988; }
+.milestone-list { display: flex; flex-direction: column; gap: 17rpx; margin-top: 25rpx; }
+.milestone { padding: 23rpx 21rpx; }
+.milestone-head { display: flex; gap: 16rpx; align-items: center; }
+.milestone .stamp { width: 61rpx; height: 61rpx; }
+.milestone .stamp image { width: 33rpx; height: 33rpx; }
+.tier-status, .next-tier { color: #5f705f; margin-top: 3rpx; font-size: 21rpx; line-height: 1.5; }
+.milestone-rule { margin-top: 14rpx; }
+.milestone-value { max-width: 39%; text-align: right; }
+.progress-track { overflow: hidden; height: 8rpx; margin: 19rpx 0 8rpx; border-radius: 6rpx; background: #e5e9dd; }
+.progress-fill { height: 100%; border-radius: 6rpx; background: #527a4c; }
+.tiers { display: flex; flex-wrap: wrap; gap: 7rpx; margin-top: 14rpx; }
+.tier { display: flex; box-sizing: border-box; align-items: center; gap: 7rpx; border: 1rpx solid #dce0d2; padding: 5rpx 8rpx; border-radius: 6rpx; color: #65715e; background: #f6f7ee; font-size: 20rpx; }
+.tier-earned { border-color: #d4bf8a; color: #645227; background: #f7edcf; }
+.notch { box-sizing: border-box; width: 10rpx; height: 10rpx; border: 1rpx solid #95a28b; transform: rotate(45deg); }
+.checked { border-color: #9e813f; background: #b59a54; }
+.complete .stamp { border-color: #c8b779; background: #f4e8c2; }
+.complete .stamp::before { border-color: #d7c68a; }
+.error-panel { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; margin-top: 22rpx; padding: 16rpx 20rpx; border: 1rpx solid #dfc9ae; border-radius: 12rpx; background: #fbf2e5; color: #734424; font-size: 25rpx; }
+.album-page .retry { width: auto; min-width: 80rpx; min-height: 60rpx; flex: none; color: #4d573d; font-size: 25rpx; font-weight: 600; }
+.loading-case { margin-top: 30rpx; padding: 8rpx 22rpx; border: 1rpx solid #dce0d2; border-radius: 16rpx; background: #fffef8; }
+.loading-case view { width: 65%; height: 20rpx; margin: 31rpx 0; border-radius: 5rpx; background: #e8ebdf; }
+.loading-case view:nth-child(2) { width: 45%; }
+.footnote { margin: 27rpx 3rpx 0; color: #6a7364; font-size: 21rpx; line-height: 1.5; }

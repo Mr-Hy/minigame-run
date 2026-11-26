@@ -1,0 +1,47 @@
+<view class="reports">
+  <view wx:if="{{!player && !sampleView}}" class="panel state">
+    <text>登录后可查看自己领地被夺的记录。</text>
+    <button class="action" bindtap="openLogin">微信登录</button>
+  </view>
+  <block wx:else>
+    <view wx:if="{{template}}" class="panel notice">
+      <text class="heading">微信失地提醒</text>
+      <text class="detail">订阅后，下次有人夺走你的领地时，微信会提醒你一次。点开战报可查看被夺地块的位置。不订阅也能跑步和查看战报。</text>
+      <text wx:if="{{subscribed && !pending}}" class="status">已订阅下一次失地提醒</text>
+      <button wx:else class="action" bindtap="subscribe" disabled="{{noticeBusy}}" loading="{{noticeBusy}}">{{pending ? '重试登记' : '订阅一次失地提醒'}}</button>
+      <text wx:if="{{noticeMessage}}" class="detail">{{noticeMessage}}</text>
+    </view>
+    <view wx:for="{{rows}}" wx:key="id" wx:for-index="rowIndex" class="panel report">
+      <text class="time">{{item.time}}</text>
+      <text class="heading">{{item.name}} 夺走了 {{item.area}}</text>
+      <text class="detail">易主时的守地配速 {{item.pace}}/公里</text>
+      <block wx:for="{{item.regions}}" wx:for-item="point" wx:key="index">
+        <button class="location" data-report="{{rowIndex}}" data-region="{{point.index}}" bindtap="showLocation">
+          <text>地块 {{point.index + 1}} · {{point.area}}</text>
+          <text class="coords">{{point.coordinates}} · {{selected && selected.id === item.id && selected.index === point.index ? '收起地图' : '查看地图'}}</text>
+        </button>
+        <block wx:if="{{selected && selected.id === item.id && selected.index === point.index}}">
+          <text wx:if="{{selected.loading}}" class="map-note">正在读取地块边界…</text>
+          <block wx:else>
+            <map class="map" latitude="{{selected.latitude}}" longitude="{{selected.longitude}}" scale="{{17}}"
+              include-points="{{selected.bounds}}" polygons="{{selected.polygons}}" polyline="{{selected.lines}}"
+              markers="{{selected.markers}}" enable-rotate="{{false}}" />
+            <view wx:if="{{selected.error}}" class="map-status">
+              <text class="map-note">{{selected.error}}</text>
+              <button class="map-retry" data-report="{{rowIndex}}" data-region="{{point.index}}" bindtap="retryBoundary">重试读取边界</button>
+            </view>
+            <text wx:elif="{{selected.hint}}" class="map-note">{{selected.hint}}</text>
+          </block>
+        </block>
+      </block>
+    </view>
+    <view wx:if="{{error}}" class="panel state">
+      <text>{{error}}</text>
+      <button class="action" bindtap="retry">重新读取</button>
+    </view>
+    <view wx:elif="{{loading}}" class="state">正在读取战报…</view>
+    <view wx:elif="{{!rows.length}}" class="panel state">暂无失地战报</view>
+    <button wx:elif="{{cursor}}" class="more" bindtap="loadMore">查看更早的战报</button>
+  </block>
+  <navigator wx:if="{{showSamplesLink}}" class="sample-link" url="/pages/reports/index?samples=1">查看示例战报</navigator>
+</view>

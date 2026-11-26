@@ -1,0 +1,85 @@
+<view class="demo">
+  <view class="intro">
+    <view>
+      <view class="title">轨迹回放</view>
+      <view class="subtitle">模拟跑步，领地只保留在本页。</view>
+    </view>
+    <button wx:if="{{round || count}}" class="reset" bindtap="reset">重新测试</button>
+  </view>
+
+  <view class="atlas">
+    <view class="atlas-bar">
+      <text class="map-title">公园领地图</text>
+      <view class="mode-options">
+        <button class="mode {{mode === 'draw' ? 'chosen' : ''}}" data-mode="draw" bindtap="modeChange">画跑线</button>
+        <button class="mode {{mode === 'inspect' ? 'chosen' : ''}}" data-mode="inspect" bindtap="modeChange">查归属</button>
+      </view>
+    </view>
+    <view class="map-frame">
+      <canvas id="park-map" type="2d" class="map" disable-scroll="{{true}}" aria-label="公园领地图，可点按或拖动画出跑线"
+        bindtouchstart="touchStart" catchtouchmove="touchMove" bindtouchend="touchEnd" bindtouchcancel="touchCancel"></canvas>
+    </view>
+    <view class="legend">
+      <view><text class="key key-a"></text>我（甲）<text class="legend-num">{{totalA}}</text> ㎡</view>
+      <view><text class="key key-b"></text>乙 <text class="legend-num">{{totalB}}</text> ㎡</view>
+    </view>
+    <view wx:if="{{error}}" class="hint warning" aria-live="polite">{{error}}</view>
+    <view wx:elif="{{selected}}" class="inspected">
+      <view class="cell-title">{{selected.title}} <text>{{selected.pace}}</text></view>
+      <view class="hint">{{selected.reason}}</view>
+    </view>
+    <view wx:elif="{{mode === 'inspect'}}" class="hint">点地块查看领主和守地配速。</view>
+    <view wx:elif="{{count}}" class="hint">已画 {{count}} 个点。可原地结束，也可沿虚线返回起点。</view>
+    <view wx:else class="hint">虚线是预设路线。也可以点地图或拖动画自己的路线。</view>
+  </view>
+
+  <view class="controls">
+    <view class="control-line">
+      <view class="field-title">本圈跑者</view>
+      <view class="switch">
+        <button wx:for="{{runners}}" wx:key="id" class="runner runner-{{item.id}} {{owner === item.id ? 'active' : ''}}"
+          data-owner="{{item.id}}" bindtap="ownerChange"><text class="key key-{{item.id}}"></text>{{item.id === 'a' ? '甲（我）' : '跑者乙'}}</button>
+      </view>
+    </view>
+    <view class="control-line">
+      <view class="field-title">配速<text class="unit">/公里</text></view>
+      <view class="switch">
+        <button wx:for="{{paces}}" wx:key="value" class="pace {{pace === item.value ? 'active' : ''}}" data-pace="{{item.value}}"
+          bindtap="paceChange">{{item.label}}</button>
+      </view>
+    </view>
+    <block wx:if="{{count}}">
+      <view class="edit-row"><button bindtap="undo">撤销上一点</button><button bindtap="clearDraft">清空跑线</button></view>
+      <view class="draft-actions">
+        <button class="action secondary" bindtap="submit">原地结束</button>
+        <button class="action" disabled="{{count < 3}}" bindtap="closeAndSubmit">跑回起点并结算</button>
+      </view>
+    </block>
+    <block wx:else>
+      <view class="control-line">
+        <view class="field-title">测试场景</view>
+        <view class="switch">
+          <button wx:for="{{scenarios}}" wx:key="id" class="pace scenario {{scenario === item.id ? 'active' : ''}}"
+            data-scenario="{{item.id}}" bindtap="scenarioChange">{{item.label}}</button>
+        </view>
+      </view>
+      <button class="action" bindtap="example"><text>回放跑者{{ownerName}}的路线</text><text class="arrow">→</text></button>
+    </block>
+  </view>
+
+  <view wx:if="{{last}}" class="result">
+    <view class="result-head"><text class="map-title">第 {{round}} 次 · 跑者{{last.name}}</text><text class="result-patch {{last.valid ? '' : 'invalid'}}">{{last.valid ? '有效圈地' : '未圈地'}}</text></view>
+    <view wx:for="{{last.reasons}}" wx:key="*this" class="note invalid">{{item}}</view>
+    <view class="result-line">{{last.distance}} 米　·　用时 {{last.time}}　·　{{last.pace}}</view>
+    <view class="result-line">有效点 {{last.samples}} 个　·　首尾相距 {{last.closure}}　·　最长间隔 {{last.gap}} 秒</view>
+    <block wx:if="{{last.valid}}">
+    <view class="area-head">圈内面积 <text>{{last.area}} ㎡</text></view>
+    <view class="metrics">
+      <view wx:for="{{last.metrics}}" wx:key="key" class="metric">
+        <text class="metric-num">{{item.value}}</text><text class="metric-label">{{item.label}} ㎡</text>
+      </view>
+    </view>
+    <view wx:for="{{last.notes}}" wx:key="*this" class="note">{{item}}</view>
+    </block>
+  </view>
+</view>

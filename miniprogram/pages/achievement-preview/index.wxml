@@ -1,0 +1,29 @@
+<page-meta page-style="{{playing ? 'overflow: hidden' : ''}}" />
+<view wx:if="{{available}}" class="preview">
+  <view class="cover">
+    <view class="cover-copy">
+      <text class="sample-tag">测试数据</text>
+      <text class="title">成就弹窗预览</text>
+      <text class="intro">选一个完赛场景，体验跑者解锁勋章的瞬间。</text>
+    </view>
+    <image class="medal" src="/assets/achievement-medal.png" mode="aspectFit" aria-hidden="true" />
+  </view>
+
+  <view class="section-heading"><text>选择测试场景</text><view class="rule"></view></view>
+  <view class="choices" aria-role="radiogroup">
+    <button wx:for="{{scenarios}}" wx:key="key" class="choice {{selected === item.key ? 'chosen' : ''}}"
+      hover-class="pressed" data-key="{{item.key}}" bindtap="selectScenario" aria-role="radio" aria-checked="{{selected === item.key}}">
+      <image class="choice-icon" src="/assets/achievements/{{item.icon}}.png" mode="aspectFit" aria-hidden="true" />
+      <text>{{item.name}}</text><view class="indicator"></view>
+    </button>
+  </view>
+
+  <view class="playback">
+    <text class="detail">{{detail}}</text>
+    <button class="play" hover-class="play-pressed" bindtap="play"><view class="triangle"></view><text>播放庆祝动画</text></button>
+    <view wx:if="{{emptyResult}}" class="empty-result" aria-role="status">
+      <view class="empty-dot"></view><text>测试完成，本次没有新成就，结算时会直接展示跑步结果。</text>
+    </view>
+  </view>
+  <achievement-celebration wx:if="{{playing}}" id="celebration" rows="{{rows}}" dismiss-label="返回测试台" bind:dismiss="dismiss"></achievement-celebration>
+</view>

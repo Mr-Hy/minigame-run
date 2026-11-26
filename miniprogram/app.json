@@ -1,0 +1,28 @@
+{
+  "pages": ["pages/me/index", "pages/login/index", "pages/run/index", "pages/leaderboard/index", "pages/result/index", "pages/demo/index", "pages/reports/index", "pages/run-stats/index", "pages/achievements/index", "pages/achievement-preview/index"],
+  "window": {
+    "navigationBarTitleText": "跑步圈地",
+    "navigationBarBackgroundColor": "#F7F6EF",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F7F6EF",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#637269",
+    "selectedColor": "#195D46",
+    "backgroundColor": "#FBFAF4",
+    "borderStyle": "white",
+    "list": [
+      {"pagePath":"pages/run/index","text":"实地跑步","iconPath":"assets/route.png","selectedIconPath":"assets/route-active.png"},
+      {"pagePath":"pages/leaderboard/index","text":"排行榜","iconPath":"assets/leaderboard.png","selectedIconPath":"assets/leaderboard-active.png"},
+      {"pagePath":"pages/me/index","text":"个人中心","iconPath":"assets/me.png","selectedIconPath":"assets/me-active.png"}
+    ]
+  },
+  "permission": {
+    "scope.userLocation": {"desc": "用于记录跑步轨迹及查看附近领地"}
+  },
+  "requiredBackgroundModes": ["location"],
+  "requiredPrivateInfos": ["getLocation", "onLocationChange", "startLocationUpdateBackground"],
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}

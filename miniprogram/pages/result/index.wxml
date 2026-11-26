@@ -1,0 +1,63 @@
+<page-meta page-style="{{signedIn && found && achievementPopup ? 'overflow: hidden' : ''}}" />
+<view class="sheet" wx:if="{{!signedIn}}">
+  <view class="headline">{{loginError || '正在确认登录状态…'}}</view>
+  <button class="map-action" wx:if="{{loginError}}" bindtap="openLogin">微信登录</button>
+</view>
+<view class="sheet" wx:elif="{{loadingRun}}"><view class="date">正在读取跑步记录…</view></view>
+<view class="sheet" wx:elif="{{runError}}">
+  <view class="headline">{{runError}}</view><button class="map-action" bindtap="loadRun">重新读取</button>
+</view>
+<view class="sheet" wx:elif="{{found}}" aria-hidden="{{achievementPopup}}">
+  <view class="date">{{day}} · 跑步记录</view>
+  <view class="headline">{{title}}</view>
+  <view class="scoreboard">
+    <view class="metric"><text class="value">{{meters}}</text><text>距离 / 米</text></view>
+    <view class="metric"><text class="value">{{duration}}</text><text>用时 / 分:秒</text></view>
+    <view class="metric"><text class="value">{{pace}}</text><text>配速 / 公里</text></view>
+  </view>
+  <view class="awards" wx:if="{{achievements.length}}">
+    <view class="awards-head">
+      <text class="awards-title">本次成就</text>
+      <button class="gallery-link" bindtap="openAchievements" hover-class="award-pressed">我的成就 ›</button>
+    </view>
+    <block wx:for="{{achievements}}" wx:key="id">
+      <view class="award-row" wx:if="{{index < 3 || showAllAchievements}}">
+        <view class="award-copy"><text class="award-name">{{item.title}}</text><text class="award-note">{{item.note}}</text></view>
+        <text class="award-value">{{item.value}}</text>
+      </view>
+    </block>
+    <button wx:if="{{achievements.length > 3}}" class="award-expand" bindtap="toggleAchievements" hover-class="award-pressed"
+      aria-expanded="{{showAllAchievements}}">{{showAllAchievements ? '收起' : '展开全部 ' + achievements.length + ' 项成就'}}</button>
+  </view>
+  <block wx:if="{{valid}}">
+    <view class="section-head"><text class="section-title">本圈领地</text><text class="total">闭环面积 {{area}}</text></view>
+    <view class="filters">
+      <button wx:for="{{filters}}" wx:key="key" class="chip {{selected === item.key ? 'active' : ''}}" data-key="{{item.key}}" bindtap="filter">
+        <text>{{item.label}}</text><text class="chip-area">{{item.area}}</text>
+      </button>
+    </view>
+    <view class="ledger" wx:if="{{rows.length}}">
+      <map wx:if="{{mapBounds.length && !achievementPopup}}" class="outcome-map" latitude="{{latitude}}" longitude="{{longitude}}" include-points="{{mapBounds}}"
+        polygons="{{polygons}}" polyline="{{lines}}" bindtap="tapMap" bindpoitap="tapMap" enable-rotate="{{false}}" />
+      <view class="legend"><text>区域面积 / 归属变化</text><text>守地配速 / 公里</text></view>
+      <view class="row {{selectedIndex === item.index ? 'row-active' : ''}}" wx:for="{{rows}}" wx:key="index"
+        data-index="{{item.index}}" bindtap="locateRegion">
+        <view><view class="row-area">{{item.area}}</view><view class="detail">{{item.detail}}</view></view>
+        <text class="row-pace">{{item.pace}}</text>
+      </view>
+      <view class="pagination" wx:if="{{pages > 1}}">
+        <button disabled="{{page === 0}}" bindtap="previous">上一页</button><text>{{page + 1}} / {{pages}}</text><button disabled="{{page + 1 >= pages}}" bindtap="next">下一页</button>
+      </view>
+    </view>
+    <view class="empty" wx:else>本圈没有这类区域</view>
+    <navigator wx:if="{{showReportEntry}}" class="report-link" url="/pages/reports/index">查看领地战报 · 可订阅失地提醒</navigator>
+  </block>
+  <block wx:else>
+    <view class="section-head"><text class="section-title">这圈为什么没有圈地</text></view>
+    <view class="reason" wx:for="{{reasons}}" wx:key="*this">{{item}}</view>
+    <view class="detail readings">首尾距离 {{closure}} 米 · 最长定位空档 {{gap}} 秒</view>
+  </block>
+  <button class="map-action" bindtap="openMap">回到领地图</button>
+</view>
+<view class="sheet" wx:else><view class="headline">还没有结算记录</view><button class="map-action" bindtap="openMap">前往领地图</button></view>
+<achievement-celebration wx:if="{{signedIn && found && achievementPopup}}" rows="{{achievements}}" bind:dismiss="dismissAchievementPopup" />

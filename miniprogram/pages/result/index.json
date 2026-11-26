@@ -1,0 +1,4 @@
+{
+  "navigationBarTitleText": "本圈结算",
+  "usingComponents": { "achievement-celebration": "/components/achievement-celebration/index" }
+}

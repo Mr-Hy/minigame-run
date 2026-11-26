@@ -1,0 +1,28 @@
+<view class="login-page">
+  <view class="wash wash-one"></view>
+  <view class="wash wash-two"></view>
+  <view class="login-card">
+    <text class="login-kicker">跑步圈地</text>
+    <view class="avatar-ring">
+      <image wx:if="{{avatar}}" class="avatar-image" src="{{avatar}}" mode="aspectFill" />
+      <view wx:else class="avatar-placeholder">跑</view>
+    </view>
+    <text class="login-title">登录跑步圈地</text>
+    <text class="login-copy">登录后可记录跑步、占领地块并查看自己的跑步记录。</text>
+    <checkbox-group class="privacy-consent" bindchange="onConsent">
+      <view class="consent-row">
+        <label class="consent-choice"><checkbox value="privacy" checked="{{agreed}}" disabled="{{loading}}" color="#536650" />
+          <text>我已阅读并同意</text>
+        </label>
+        <text class="consent-link" bindtap="openPrivacy">《隐私保护指引》</text>
+      </view>
+    </checkbox-group>
+    <button class="login-button" open-type="chooseAvatar" bindchooseavatar="login"
+      loading="{{loading}}" disabled="{{!agreed || loading}}">
+      <text class="login-button-label">{{loading ? '正在保存头像并登录' : '选择微信头像并登录'}}</text>
+    </button>
+    <button class="guest-button" bindtap="cancel" disabled="{{loading}}">暂不登录，{{fromRun ? '返回实地跑步' : '返回个人中心'}}</button>
+    <text class="error-message" wx:if="{{error}}">{{error}}</text>
+    <text class="privacy-note">头像会显示在个人中心，其他跑者也能在你的领地上看到头像和昵称。</text>
+  </view>
+</view>

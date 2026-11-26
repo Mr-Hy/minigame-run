@@ -1,0 +1,102 @@
+<view class="journal">
+  <view wx:if="{{restoring || authError}}" class="state">
+    <text>{{authError || '正在确认登录状态…'}}</text>
+    <button wx:if="{{authError}}" class="action" bindtap="retry">重新读取</button>
+  </view>
+  <view wx:elif="{{!player}}" class="guest">
+    <view class="guest-art" aria-hidden="true"><view></view><view></view><view></view><view></view></view>
+    <text class="guest-title">我的跑步记录</text>
+    <text class="guest-copy">登录后可查看累计里程、个人最佳，以及每周、每月和全年的跑步记录。</text>
+    <button class="action" bindtap="openLogin">微信登录</button>
+  </view>
+  <block wx:else>
+    <view class="overview" wx:if="{{lifetime}}">
+      <view class="lifetime-top">
+        <view class="lifetime-main"><text class="caption">累计里程</text>
+          <view class="distance-line"><text class="lifetime-km">{{lifetime.km}}</text><text class="km-unit">公里</text></view>
+        </view>
+        <view class="lifetime-side">
+          <view><text class="side-label">累计跑步</text><text>{{lifetime.count}} 次</text></view>
+          <view><text class="side-label">总用时</text><text>{{lifetime.duration}}</text></view>
+        </view>
+      </view>
+      <view class="lifetime-metrics">
+        <view><text class="metric-label">平均跑量</text><text class="metric-value">{{lifetime.avgKm}}<text class="small-unit"> km</text></text></view>
+        <view><text class="metric-label">平均配速</text><text class="metric-value">{{lifetime.pace}}</text></view>
+        <view><text class="metric-label">单次最远</text><text class="metric-value">{{lifetime.longestKm}}<text class="small-unit"> km</text></text></view>
+        <view><text class="metric-label">单次最快配速</text><text class="metric-value">{{lifetime.bestPace}}</text></view>
+      </view>
+    </view>
+    <view class="section-heading">
+      <text class="section-title">跑步统计</text>
+      <view class="tabs">
+        <button wx:for="{{tabs}}" wx:key="key" class="tab {{period === item.key ? 'tab-active' : ''}}"
+          data-period="{{item.key}}" bindtap="switchPeriod">{{item.label}}</button>
+      </view>
+    </view>
+    <view wx:if="{{error}}" class="state"><text>{{error}}</text><button class="action" bindtap="retry">重新读取统计</button></view>
+    <view wx:elif="{{loading || !summary}}" class="state">正在读取跑步统计…</view>
+    <block wx:else>
+      <view class="period-panel">
+        <view class="period-nav">
+          <text class="range">{{rangeText}}</text>
+          <view class="arrows">
+            <button class="return-now" wx:if="{{offset < 0}}" bindtap="current">回到本期</button>
+            <button class="step" aria-label="上一期" disabled="{{!canPrevious}}" bindtap="previous"><view class="chevron back"></view></button>
+            <button class="step" aria-label="下一期" disabled="{{offset === 0}}" bindtap="next"><view class="chevron"></view></button>
+          </view>
+        </view>
+        <view class="period-main"><text class="period-km">{{summary.km}}</text><text class="km-unit">公里</text></view>
+        <view class="period-metrics">
+          <view><text class="metric-label">跑步次数</text><text class="period-value">{{summary.count}}<text class="small-unit"> 次</text></text></view>
+          <view><text class="metric-label">运动用时</text><text class="period-value">{{summary.duration}}</text></view>
+          <view><text class="metric-label">平均配速</text><text class="period-value">{{summary.pace}}</text></view>
+        </view>
+        <view class="chart-heading">
+          <text>{{period === 'month' ? '跑步日历' : '里程分布'}}</text>
+          <view wx:if="{{period === 'month'}}" class="legend">少<view class="swatch level-0"></view><view class="swatch level-1"></view><view class="swatch level-2"></view><view class="swatch level-3"></view>多</view>
+          <text wx:else class="chart-note">单位 · 公里</text>
+        </view>
+        <view wx:if="{{period === 'month'}}" class="calendar">
+          <text wx:for="{{['一','二','三','四','五','六','日']}}" wx:key="*this" class="weekday">{{item}}</text>
+          <button wx:for="{{buckets}}" wx:key="key" class="calendar-day level-{{item.level}} {{item.count > 0 && item.level === 0 ? 'logged-day' : ''}} {{selectedKey === item.key ? 'selected-day' : ''}}"
+            style="grid-column-start: {{index === 0 ? monthFirstColumn : 'auto'}};" aria-label="{{item.fullLabel}}，{{item.count}}次，{{item.km}}公里"
+            data-key="{{item.key}}" bindtap="selectBucket">{{item.day}}</button>
+        </view>
+        <view wx:else class="plot {{period === 'year' ? 'annual' : ''}}">
+          <view class="axis"><text>{{chartMaxKm === '0' ? '' : chartMaxKm}}</text><text>0</text></view>
+          <view class="plot-area">
+            <view class="guides"><view></view><view></view><view></view></view>
+            <button wx:for="{{buckets}}" wx:key="key" class="column {{selectedKey === item.key ? 'selected-col' : ''}}"
+              aria-label="{{item.fullLabel}}，{{item.count}}次，{{item.km}}公里" data-key="{{item.key}}" bindtap="selectBucket">
+              <view class="bar-space"><view wx:if="{{item.count && !item.height}}" class="zero-mark"></view>
+                <view wx:else class="bar {{item.height > 0 ? 'nonzero' : ''}}" style="height:{{item.height}}%"></view></view>
+              <text class="column-label">{{item.label}}</text>
+            </button>
+          </view>
+        </view>
+        <view class="chart-foot">
+          <text wx:if="{{selectedBucket}}">{{selectedBucket.fullLabel}} · {{selectedBucket.count}} 次 · {{selectedBucket.km}} 公里</text>
+          <text wx:else>{{period === 'month' ? '点日期查看当日记录' : (period === 'year' ? '点月份查看当月记录' : '点星期查看当日记录')}}</text>
+        </view>
+      </view>
+      <view class="section-heading history-heading">
+        <text class="section-title">跑步明细</text>
+        <button wx:if="{{selectedKey}}" class="clear-filter" bindtap="clearBucket">查看本期全部</button>
+        <text wx:else class="chart-note">共 {{summary.count}} 次</text>
+      </view>
+      <view class="history-list" wx:if="{{rows.length}}">
+        <button wx:for="{{rows}}" wx:key="id" class="run" data-id="{{item.id}}" bindtap="openRun">
+          <view class="run-main"><text class="run-date">{{item.date}}</text><text class="run-sub">{{item.time}} 结束</text></view>
+          <view class="run-metrics"><text class="run-distance">{{item.km}}<text class="small-unit"> 公里</text></text>
+            <text class="run-sub">{{item.duration}}{{item.pace === '—' ? '' : ' · ' + item.pace + '/公里'}}</text></view>
+          <view class="chevron"></view>
+        </button>
+      </view>
+      <view wx:if="{{historyError}}" class="state"><text>{{historyError}}</text><button bindtap="retryHistory" class="action">重试读取明细</button></view>
+      <view wx:elif="{{historyLoading}}" class="history-state">正在读取明细…</view>
+      <view wx:elif="{{!rows.length}}" class="history-state">{{selectedBucket ? selectedBucket.fullLabel : periodLabel}}还没有跑步记录</view>
+      <button wx:elif="{{cursor}}" class="more" bindtap="loadMore">查看更多记录</button>
+    </block>
+  </block>
+</view>

@@ -1,0 +1,81 @@
+<view class="album-page">
+  <view class="album-cover">
+    <view class="terrain" aria-hidden="true"><view></view><view></view><view></view><view></view><view></view></view>
+    <image class="cover-medal" src="/assets/achievement-medal.png" mode="aspectFit" aria-hidden="true" />
+    <view class="cover-body">
+      <text class="cover-title">跑者成就册</text>
+      <block wx:if="{{state === 'ready'}}">
+        <view class="cover-score"><text class="unlocked">{{album.unlocked}}</text><text class="available">/ {{album.total}}</text></view>
+        <text class="cover-caption">{{album.unlocked === album.total ? '所有勋章已点亮' : '已点亮勋章'}}</text>
+      </block>
+      <block wx:elif="{{state === 'guest'}}">
+        <text class="cover-summary">{{album.recordTotal}} 项个人纪录 · {{album.tierTotal}} 档里程碑</text>
+        <button class="login-button" bindtap="openLogin">登录查看我的成就<view class="arrow light"></view></button>
+      </block>
+      <text wx:else class="cover-summary">{{state === 'loading' ? '正在读取你的成就…' : '暂时无法读取成就'}}</text>
+    </view>
+  </view>
+
+  <view wx:if="{{error}}" class="error-panel">
+    <text>{{error}}</text><button class="retry" bindtap="refresh">重试</button>
+  </view>
+
+  <block wx:if="{{state === 'ready' || state === 'guest'}}">
+    <view class="tab-bar" aria-role="tablist">
+      <button class="album-tab {{tab === 'records' ? 'active' : ''}}" data-tab="records" bindtap="switchTab"
+        aria-role="tab" aria-selected="{{tab === 'records'}}">
+        <text>个人纪录</text><text class="tab-count">{{state === 'ready' ? album.recordCount + '/' : ''}}{{album.recordTotal}}</text>
+      </button>
+      <button class="album-tab {{tab === 'milestones' ? 'active' : ''}}" data-tab="milestones" bindtap="switchTab"
+        aria-role="tab" aria-selected="{{tab === 'milestones'}}">
+        <text>累计里程碑</text><text class="tab-count">{{state === 'ready' ? album.tierCount + '/' : ''}}{{album.tierTotal}}</text>
+      </button>
+    </view>
+
+    <block wx:if="{{tab === 'records'}}">
+      <view wx:for="{{album.groups}}" wx:key="title" class="record-group">
+        <view class="section-heading"><text>{{item.title}}</text><view class="section-rule"></view></view>
+        <view class="record-case">
+          <button wx:for="{{item.items}}" wx:for-item="record" wx:key="key" class="record-row {{record.earned ? 'earned' : 'pending'}}"
+            data-run="{{record.runId}}" bindtap="openRun" disabled="{{!record.runId}}" hover-class="row-hover">
+            <view class="stamp"><image src="/assets/achievements/{{record.icon}}.png" mode="aspectFit" /></view>
+            <view class="record-text">
+              <text class="record-title">{{record.title}}</text>
+              <text class="record-rule">{{record.rule}}</text>
+            </view>
+            <view wx:if="{{record.earned}}" class="result-block">
+              <view class="result-value"><text>{{record.number}}</text><text wx:if="{{record.unit}}" class="result-unit">{{record.unit}}</text></view>
+              <text class="record-date">{{record.date}}</text>
+            </view>
+            <text wx:else class="not-earned">{{state === 'guest' ? '—' : '待建立'}}</text>
+            <view wx:if="{{record.runId}}" class="arrow row-arrow"></view>
+          </button>
+        </view>
+      </view>
+    </block>
+    <view wx:else class="milestone-list">
+      <view wx:for="{{album.milestoneRows}}" wx:key="key" class="milestone {{item.completed ? 'complete' : ''}}">
+        <view class="milestone-head">
+          <view class="stamp"><image src="/assets/achievements/{{item.icon}}.png" mode="aspectFit" /></view>
+          <view class="milestone-title-wrap"><text class="record-title">{{item.title}}</text>
+            <text class="tier-status" wx:if="{{state === 'ready'}}">{{item.completed ? '全部点亮' : '已点亮 ' + item.earnedCount + ' / ' + item.tiers.length}}</text>
+          </view>
+          <view wx:if="{{state === 'ready'}}" class="milestone-value"><text>{{item.number}}</text><text class="result-unit">{{item.unit}}</text></view>
+        </view>
+        <text class="milestone-rule">{{item.rule}}</text>
+        <block wx:if="{{state === 'ready'}}">
+          <view class="progress-track"><view class="progress-fill" style="width: {{item.percent}}%"></view></view>
+          <text wx:if="{{!item.completed}}" class="next-tier">下一枚勋章 · {{item.next}}</text>
+        </block>
+        <view class="tiers">
+          <view wx:for="{{item.tiers}}" wx:for-item="tier" wx:key="target" class="tier {{tier.earned ? 'tier-earned' : ''}}">
+            <view class="notch {{tier.earned ? 'checked' : ''}}"></view><text>{{tier.label}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="footnote">成就从功能启用后的实跑结算开始记录。</view>
+  </block>
+  <view wx:elif="{{state === 'loading'}}" class="loading-case" aria-hidden="true"><view></view><view></view><view></view></view>
+</view>

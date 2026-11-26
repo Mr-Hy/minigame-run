@@ -1,0 +1,86 @@
+.run-page { position: fixed; inset: 0; overflow: hidden; color: #193e31; }
+.park-map { position: absolute; top: 0; left: 0; display: block; width: 100%; height: 100%; }
+.owner-flag { display: flex; align-items: center; }
+.owner-portrait { position: relative; z-index: 1; flex: none; box-sizing: border-box; width: 24px; height: 24px; border: 1.5px solid #fff; border-radius: 12px; background: #fff; overflow: hidden; }
+.owner-photo { width: 100%; height: 100%; border-radius: 12px; }
+.owner-nickname { flex: none; box-sizing: border-box; height: 18px; border: 1px solid #cec9c0; border-radius: 9px; background: #fffcf5; color: #42433f; font-size: 11px; font-weight: 700; line-height: 16px; text-align: center; }
+.beside-portrait { margin-left: -4px; padding-left: 2px; }
+
+.map-overlay {
+  position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column;
+  box-sizing: border-box; padding: 22rpx 24rpx 38rpx; pointer-events: none;
+}
+.territory-panel, .map-tools, .run-panel, .guest-dock .primary {
+  pointer-events: auto; box-shadow: 0 4rpx 18rpx rgba(25, 53, 37, 0.17);
+}
+.territory-panel, .run-panel {
+  box-sizing: border-box; width: 100%; max-width: 500px; margin: 0 auto; border-radius: 24rpx;
+  padding: 20rpx 26rpx; overflow-y: auto;
+}
+.territory-panel { flex: none; max-height: 25vh; background: #194d3b; color: #fffef5; }
+.section-head, .heading, .legend, .legend-entry, .activity-head, .phase, .metrics { display: flex; align-items: center; }
+.section-head { justify-content: space-between; gap: 12rpx; }
+.heading { gap: 14rpx; font-size: 36rpx; font-weight: 650; line-height: 1.25; }
+.map-count { color: #dbe9b8; font-size: 24rpx; font-weight: 500; }
+.legend { gap: 16rpx; }
+.legend-entry { gap: 7rpx; color: #edf1e5; font-size: 22rpx; }
+.swatch { width: 14rpx; height: 14rpx; border-radius: 4rpx; }
+.mine { background: #244e3c; box-shadow: inset 0 0 0 1px #c1e7cb; }
+.other { background: #cacccf; }
+.territory-info { margin-top: 8rpx; font-size: 24rpx; line-height: 1.45; color: #dce9dc; overflow-wrap: anywhere; }
+.territory-info.issue { color: #ffddbc; }
+.territory-title { color: #fffef5; font-size: 27rpx; font-weight: 600; }
+.territory-area { margin-left: 14rpx; font-size: 24rpx; font-weight: 400; }
+
+.map-tools { align-self: flex-end; display: flex; flex-direction: column; flex: none; margin-top: 16rpx; border-radius: 22rpx; background: #fffef8; }
+.run-page .tool {
+  display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6rpx;
+  width: 84rpx; min-width: 0; height: 84rpx; margin: 0; padding: 0; background: transparent;
+  color: #28513e; font-size: 20rpx; line-height: 1.1;
+}
+.tool + .tool { border-top: 1rpx solid #dfe6da; border-radius: 0 0 22rpx 22rpx; }
+.tool[disabled] { opacity: 0.55; }
+.locate-icon, .refresh-icon { position: relative; box-sizing: border-box; width: 27rpx; height: 27rpx; border: 3rpx solid currentColor; border-radius: 50%; }
+.locate-icon::after { content: ''; position: absolute; inset: 5rpx; border-radius: 50%; background: currentColor; }
+.refresh-icon { border-right-color: transparent; }
+.refresh-icon::after { content: ''; position: absolute; top: -4rpx; right: -2rpx; border: solid currentColor; border-width: 0 3rpx 3rpx 0; width: 8rpx; height: 8rpx; }
+
+.run-dock { margin-top: auto; }
+.run-panel { max-height: 40vh; background: #fffef8; }
+.run-controls { display: flex; align-items: center; justify-content: center; gap: 20rpx; }
+.run-summary { flex: 1; min-width: 0; }
+.activity-head { flex-wrap: wrap; gap: 4rpx 14rpx; }
+.activity-title { font-size: 26rpx; font-weight: 650; line-height: 1.25; }
+.phase { gap: 6rpx; font-size: 20rpx; color: #526b5a; }
+.phase-dot { width: 9rpx; height: 9rpx; border-radius: 50%; background: #91a592; }
+.phase-live .phase-dot { background: #cb6439; }
+.metrics { margin-top: 10rpx; gap: 8rpx; }
+.metric { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.value { font-size: 38rpx; font-weight: 650; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.unit { margin-top: 3rpx; color: #647369; font-size: 20rpx; line-height: 1.3; }
+.instruction, .notice { margin-top: 12rpx; font-size: 22rpx; line-height: 1.4; color: #526658; }
+.notice { color: #924523; overflow-wrap: anywhere; }
+.run-page .text-action { width: auto; margin: 6rpx 0 0; padding: 5rpx 0; color: #245d47; font-size: 24rpx; line-height: 1.5; background: transparent; text-decoration: underline; }
+.run-page .primary {
+  display: flex; flex: none; align-items: center; justify-content: center; gap: 8rpx; box-sizing: border-box;
+  width: 166rpx; min-width: 0; min-height: 44px; margin: 0; padding: 12rpx 8rpx; border-radius: 100rpx;
+  background: #185c46; color: #fffef7; font-size: 24rpx; font-weight: 650; line-height: 1.3;
+}
+.run-page .guest-dock .primary { width: auto; padding: 18rpx 32rpx; }
+.start-run-icon { flex: none; width: 40rpx; height: 40rpx; overflow: hidden; pointer-events: none; }
+.start-run-stride { display: block; width: 1600%; height: 100%; animation: start-run-stride .84s steps(16, end) infinite; }
+@keyframes start-run-stride {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .start-run-stride { animation: none; }
+}
+.run-page .end { background: #a94e2d; }
+.run-page .working { background: #e4e8dc; color: #526658; }
+
+@media (max-height: 480px) {
+  .map-overlay { padding: 12rpx 20rpx 20rpx; }
+  .map-tools { flex-direction: row; margin-top: 8rpx; }
+  .tool + .tool { border-top: 0; border-left: 1rpx solid #dfe6da; border-radius: 0 22rpx 22rpx 0; }
+}

@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "跑步手记",
+  "navigationBarBackgroundColor": "#F7F6EF",
+  "backgroundColor": "#F7F6EF",
+  "enablePullDownRefresh": true
+}

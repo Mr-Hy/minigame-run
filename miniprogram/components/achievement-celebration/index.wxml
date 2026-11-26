@@ -1,0 +1,23 @@
+<view class="celebration" aria-role="dialog" aria-label="本次达成 {{rows.length}} 项成就">
+  <view class="celebration-card">
+    <view class="stage">
+      <view class="medal-halo" aria-hidden="true"></view>
+      <image class="poppers" src="/components/achievement-celebration/party-poppers.png" mode="scaleToFill" aria-hidden="true" />
+      <image class="celebration-medal" src="/assets/achievement-medal.png" mode="aspectFit" aria-hidden="true" />
+      <view class="confetti-field" aria-hidden="true">
+        <view wx:for="{{pieces}}" wx:key="id" class="confetti {{item.shape}}" style="{{item.style}}"></view>
+      </view>
+      <text class="celebration-title">本次达成 {{rows.length}} 项成就</text>
+    </view>
+    <scroll-view class="celebration-list" scroll-y="{{true}}" enhanced="{{true}}" show-scrollbar="{{true}}"
+      style="height: {{rows.length > 3 ? 345 : rows.length * 105}}rpx">
+      <view class="celebration-row" wx:for="{{rows}}" wx:key="id">
+        <view class="row-copy"><text class="row-name">{{item.title}}</text><text class="row-note">{{item.note}}</text></view>
+        <text class="row-value">{{item.value}}</text>
+      </view>
+    </scroll-view>
+    <view class="celebration-footer">
+      <button class="celebration-dismiss" bindtap="dismiss" hover-class="dismiss-pressed">{{dismissLabel}}</button>
+    </view>
+  </view>
+</view>

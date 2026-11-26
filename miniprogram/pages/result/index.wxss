@@ -1,0 +1,39 @@
+.sheet { padding: 44rpx 32rpx 72rpx; }
+.date, .detail, .legend, .empty { color: #596c60; font-size: 25rpx; line-height: 1.6; }
+.headline { font-size: 56rpx; font-weight: 750; margin: 8rpx 0 32rpx; }
+.scoreboard { display: flex; padding: 38rpx 14rpx; border-radius: 24rpx; background: #204d3c; color: #f5f5e9; }
+.metric { flex: 1; display: flex; flex-direction: column; padding-left: 20rpx; font-size: 23rpx; color: #d0dfc9; }
+.value { color: #fffdf5; font-size: 49rpx; font-weight: 650; font-variant-numeric: tabular-nums; margin-bottom: 4rpx; }
+.section-title { font-size: 36rpx; font-weight: 650; }
+.section-head, .legend, .row, .pagination { display: flex; align-items: center; justify-content: space-between; }
+.section-head { gap: 10rpx; margin: 40rpx 0 18rpx; }
+.total { color: #596c60; font-size: 24rpx; }
+.filters { display: grid; grid-template-columns: 1fr 1fr; gap: 10rpx; }
+.chip, .pagination button { min-width: 0; margin: 0; padding: 12rpx 4rpx; flex: 1; border-radius: 12rpx; background: #e6eade; color: #375645; font-weight: 500; font-size: 24rpx; line-height: 1.5; }
+.chip { width: 100% !important; box-sizing: border-box; display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; padding: 15rpx 18rpx; }
+.chip-area { font-weight: 650; font-variant-numeric: tabular-nums; }
+.chip.active { background: #245740; color: white; }
+.outcome-map { display: block; width: 100%; height: 330rpx; border-radius: 18rpx; margin-bottom: 18rpx; }
+.row-active { background: #f1e8d8; }
+.ledger { margin-top: 28rpx; }
+.legend { padding-bottom: 12rpx; font-size: 22rpx; }
+.row { border-top: 1rpx solid #d5ddce; padding: 18rpx 0; }
+.row-area, .row-pace { font-weight: 650; font-size: 29rpx; }
+.empty, .readings { padding: 26rpx 0; }
+.reason { padding: 16rpx 20rpx; margin-bottom: 8rpx; border-left: 5rpx solid #c7653c; background: #f3e8d9; }
+.map-action { margin: 40rpx 0 0; border-radius: 16rpx; background: #204d3c; color: #fffdf5; font-size: 30rpx; }
+.report-link { padding: 20rpx 0; color: #245740; font-size: 26rpx; text-decoration: underline; }
+.pagination { gap: 24rpx; margin-top: 15rpx; font-size: 25rpx; }
+
+.awards { margin-top: 24rpx; padding: 6rpx 26rpx 12rpx; background: #fbf5e4; border: 1rpx solid #e3d6b1; border-radius: 22rpx; }
+.awards-head, .award-row { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
+.awards-head { min-height: 84rpx; }
+.awards-title { color: #504322; font-size: 32rpx; font-weight: 650; }
+.awards button { box-sizing: border-box; width: auto; min-height: 74rpx; margin: 0; padding: 0; background: transparent; color: #67562b; line-height: 74rpx; font-size: 24rpx; }
+.award-row { padding: 18rpx 0; border-top: 1rpx solid #e5dbbf; }
+.award-copy { display: flex; flex-direction: column; gap: 4rpx; min-width: 0; }
+.award-name { font-size: 27rpx; font-weight: 600; }
+.award-note { color: #6f6549; font-size: 23rpx; line-height: 1.4; }
+.award-value { color: #654e20; font-size: 27rpx; font-weight: 650; font-variant-numeric: tabular-nums; text-align: right; }
+.awards .award-expand { width: 100%; border-top: 1rpx solid #e5dbbf; border-radius: 0; }
+.awards .award-pressed { color: #283c25; background: #f4ecd6; }

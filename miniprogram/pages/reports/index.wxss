@@ -1,0 +1,18 @@
+.reports { padding: 32rpx 28rpx calc(48rpx + env(safe-area-inset-bottom)); }
+.panel { margin-bottom: 24rpx; padding: 28rpx; border: 1rpx solid #deded3; border-radius: 14rpx; background: #fffdf8; }
+.heading, .time, .detail, .status, .coords { display: block; }
+.heading { color: #283b2b; font-size: 34rpx; font-weight: 600; }
+.time, .coords { color: #647168; font-size: 23rpx; }
+.time { margin-bottom: 12rpx; }
+.detail, .status { margin-top: 12rpx; font-size: 27rpx; line-height: 1.6; }
+.detail { color: #535f55; }
+.status { color: #195d46; }
+.action, .more { margin: 20rpx 0 0; padding: 0 24rpx; border-radius: 10rpx; background: #536650; color: #fffdf7; font-size: 26rpx; line-height: 68rpx; }
+.location { width: 100%; margin-top: 18rpx; padding: 18rpx 0 0; border-top: 1rpx solid #e4e3da; border-radius: 0; text-align: left; background: transparent; color: #195d46; font-size: 27rpx; line-height: 1.5; }
+.map { width: 100%; height: 340rpx; margin-top: 14rpx; }
+.map-note { display: block; margin-top: 12rpx; color: #647168; font-size: 23rpx; }
+.map-status { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12rpx; }
+.map-retry { margin: 0; padding: 8rpx 0; color: #195d46; background: transparent; font-size: 24rpx; line-height: 1.5; }
+.state, .more { text-align: center; }
+.state { color: #535f55; }
+.sample-link { padding: 20rpx 0; text-align: center; color: #35624b; font-size: 25rpx; text-decoration: underline; }

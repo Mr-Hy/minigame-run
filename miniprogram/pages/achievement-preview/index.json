@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "成就弹窗预览",
+  "navigationBarBackgroundColor": "#F7F6EF",
+  "backgroundColor": "#F7F6EF",
+  "usingComponents": {
+    "achievement-celebration": "/components/achievement-celebration/index"
+  }
+}
