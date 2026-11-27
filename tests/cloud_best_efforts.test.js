@@ -38,30 +38,28 @@ test('达到五公里即可建立纪录，开放路线同样计算', () => {
   assert.equal(analyze(samples.slice(0, -1)).fastest_5k, null)
 })
 
-test('不跨越满六十秒的定位中断或速度跳变，中断后的完整公里仍有效', () => {
-  const gap = kilometer.map(([x, t]) => [x, x < 500 ? t : t + 30])
-  const jump = kilometer.map(([x, t]) => x < 500 ? [x, t] : [x + 100, t - 29])
-  for (const samples of [gap, jump]) {
+test('六十秒及更长的定位空档照常计入整公里用时', () => {
+  for (const delay of [30, 150]) {
+    const samples = kilometer.map(([x, t]) => [x, x < 500 ? t : t + delay])
     const effort = analyze(samples)
     assert.equal(effort.analysis.pace_anomaly, false)
-    assert.equal(effort.fastest_1k, null)
+    assert.equal(effort.fastest_1k, 300 + delay)
   }
-  const following = kilometer.slice(6).map(([x, t]) => [x + 500, t + 180])
-  assert.equal(analyze([...gap, ...following]).fastest_1k, 300)
 })
 
-test('孤立跳点保留在整圈里程和路径中，分段用两侧连续点计时', () => {
+test('整圈配速正常时，局部高速路段计入路线、里程和最快一公里', () => {
   const samples = [...kilometer.slice(0, 5), [720, 135], ...kilometer.slice(5)]
   const effort = analyze(samples)
+  assert.equal(effort.analysis.pace_anomaly, false)
   assert.equal(effort.analysis.distance_m, 1440)
   assert.deepEqual(effort.paths, [samples.map(([x]) => [x, 0])])
-  assert.equal(effort.fastest_1k, 300)
+  assert.equal(effort.fastest_1k, 168)
 })
 
-test('配速异常的运动照常计算连续分段，末尾跳变不会刷新纪录', () => {
+test('全程配速异常仍按完整路线统计最快分段', () => {
   const steady = Array.from({ length: 51 }, (_, i) => [i * 100, i * 18])
   const effort = analyze([...steady, [6000, 910]])
   assert.equal(effort.analysis.pace_anomaly, true)
-  assert.equal(effort.fastest_1k, 180)
-  assert.equal(effort.fastest_5k, 900)
+  assert.equal(effort.fastest_1k, 10)
+  assert.equal(effort.fastest_5k, 730)
 })

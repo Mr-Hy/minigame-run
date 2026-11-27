@@ -1,13 +1,7 @@
 'use strict'
 
-const MAX_EFFORT_SPEED_M_PER_S = 12
-const MAX_EFFORT_GAP_SECONDS = 60
+const { enclosedRegions } = require('./enclosed-regions')
 const EPSILON_M = 1e-6
-
-function speedJump(a, b, meters) {
-  const seconds = b.timestamp - a.timestamp
-  return meters > MAX_EFFORT_SPEED_M_PER_S * seconds + a.accuracy + b.accuracy + EPSILON_M
-}
 
 // Between samples the time at a distance is linear. A fastest window must
 // therefore have a sampled start or end. Scan both cases in distance order.
@@ -35,56 +29,42 @@ function fastestFromAnchors(path, offset) {
   return best
 }
 
-function fastestEffort(paths, distance) {
-  let best = Infinity
-  for (const path of paths) {
-    if (path[path.length - 1].distance < distance - EPSILON_M) continue
-    best = Math.min(best, fastestFromAnchors(path, distance), fastestFromAnchors(path, -distance))
-  }
-  return Number.isFinite(best) ? Math.round(best) : null
+function fastestEffort(path, distance) {
+  if (!path.length || path[path.length - 1].distance < distance - EPSILON_M) return null
+  return Math.round(Math.min(fastestFromAnchors(path, distance), fastestFromAnchors(path, -distance)))
 }
 
-// Split records need continuous timed samples, even when the full route is usable.
-function continuousEffortPaths(grid, fixes, xy) {
-  const paths = []
-  let path, previous = -1
-  for (let i = 0; i < fixes.length; i++) {
-    const fix = fixes[i]
-    const prior = fixes[previous]
-    let leg = null
-    if (prior && fix.timestamp - prior.timestamp < MAX_EFFORT_GAP_SECONDS) {
-      const length = grid.measureDistance(xy[previous], xy[i])
-      if (!speedJump(prior, fix, length)) {
-        leg = length
-      } else {
-        const next = fixes[i + 1]
-        if (next && next.timestamp - prior.timestamp < MAX_EFFORT_GAP_SECONDS &&
-            speedJump(fix, next, grid.measureDistance(xy[i], xy[i + 1])) &&
-            !speedJump(prior, next, grid.measureDistance(xy[previous], xy[i + 1]))) {
-          continue
-        }
-      }
-    }
-    if (leg === null) {
-      path = [{ distance: 0, arrival: fix.timestamp, departure: fix.timestamp }]
-      paths.push(path)
-    } else {
-      const last = path[path.length - 1]
-      if (leg === 0) last.departure = fix.timestamp
-      else path.push({ distance: last.distance + leg, arrival: fix.timestamp, departure: fix.timestamp })
-    }
-    previous = i
+function timedPath(grid, fixes, route) {
+  const start = fixes[0].timestamp
+  const path = [{ distance: 0, arrival: start, departure: start }]
+  for (let i = 1; i < fixes.length; i++) {
+    const time = fixes[i].timestamp
+    const leg = grid.measureDistance(route[i - 1], route[i])
+    const last = path[path.length - 1]
+    if (leg === 0) last.departure = time
+    else path.push({ distance: last.distance + leg, arrival: time, departure: time })
   }
-  return paths
+  return path
 }
 
 function analyzeRunTrack(grid, start, end, points) {
   const fixes = grid.validFixes(start, end, points)
-  const analysis = grid.analyzeFixes(start, end, fixes)
+  const { polygon, ...analysis } = grid.analyzeFixes(start, end, fixes)
   const route = fixes.map(p => grid.toXY(p.latitude, p.longitude))
-  const effortPaths = analysis.distance_m < 1000 - EPSILON_M ? [] : continuousEffortPaths(grid, fixes, route)
-  return { analysis, paths: route.length ? [route] : [],
-    fastest_1k: fastestEffort(effortPaths, 1000), fastest_5k: fastestEffort(effortPaths, 5000) }
+  let regions = polygon ? [polygon] : []
+  if (!polygon && !analysis.reasons.includes('distance_too_short')) {
+    // Preserve the usual closing segment only when the finish is near the start.
+    // Longer open tracks may still contain one or more completed loops.
+    const boundary = analysis.reasons.includes('finish_too_far') ? route : [...route, route[0]]
+    regions = enclosedRegions(boundary)
+    analysis.area_m2 = regions.reduce((sum, region) => sum + grid.measureArea(region), 0)
+    analysis.valid_loop = regions.length > 0
+    analysis.reasons = regions.length ? [] : ['no_enclosed_area']
+    analysis.reason_messages = regions.length ? [] : ['轨迹没有围出面积']
+  }
+  const path = analysis.distance_m < 1000 - EPSILON_M ? [] : timedPath(grid, fixes, route)
+  return { analysis, regions, paths: route.length ? [route] : [],
+    fastest_1k: fastestEffort(path, 1000), fastest_5k: fastestEffort(path, 5000) }
 }
 
 module.exports = { analyzeRunTrack }

@@ -37,24 +37,26 @@ function viewport(left, bottom, right, top) {
   return { west: sw.longitude, south: sw.latitude, east: ne.longitude, north: ne.latitude }
 }
 
-test('超过全程均速观察线才标记异常，比较原始距离和总耗时', () => {
-  const start = { ...grid.toGeo(0, 0), timestamp: 100, accuracy: 3 }
-  function finish(x) {
-    const end = { ...grid.toGeo(x, 0), timestamp: 105, accuracy: 7 }
-    const inaccurate = { ...grid.toGeo(4000, 0), timestamp: 110, accuracy: 51 }
-    return analyzeRunTrack(grid, 100, 160, [end, inaccurate, start]).analysis
+test('整圈均速超过十八公里每小时才标记配速异常，边界两侧均可正常圈地', () => {
+  function finish(width) {
+    const ring = [[0, 0], [width, 0], [width, 75], [0, 75], [0, 0]]
+    const points = ring.map(([x, y], index) => ({ ...grid.toGeo(x, y), timestamp: 100 + index, accuracy: 3 }))
+    points.push({ ...grid.toGeo(4000, 0), timestamp: 110, accuracy: 51 })
+    return analyzeRunTrack(grid, 100, 160, points.reverse()).analysis
   }
-  const limit = finish(300)
+  const limit = finish(75)
   approx(limit.distance_m, 300)
   assert.equal(limit.pace_anomaly, false)
-  assert.deepEqual(limit.reasons, ['finish_too_far'])
-  const fast = finish(300.1)
+  assert.equal(limit.valid_loop, true)
+  assert.deepEqual(limit.reasons, [])
+  const fast = finish(75.05)
   approx(fast.distance_m, 300.1)
   assert.equal(fast.pace_anomaly, true)
-  assert.deepEqual(fast.reasons, limit.reasons)
-  assert.deepEqual(fast.reason_messages, limit.reason_messages)
+  assert.equal(fast.valid_loop, true)
+  assert.deepEqual(fast.reasons, [])
+  assert.deepEqual(fast.reason_messages, [])
   assert.equal(fast.pace_s_per_km, limit.pace_s_per_km)
-  assert.equal(fast.polygon, null)
+  approx(fast.area_m2, 75.05 * 75)
 })
 
 test('完赛取同一时刻最精确的点；闭合线不计里程，配速包含停留', () => {
@@ -69,9 +71,7 @@ test('完赛取同一时刻最精确的点；闭合线不计里程，配速包�
   assert.equal(result.valid_loop, true)
 })
 
-test('自交和折返不圈地，定位空档只记录时长', () => {
-  const cross = samples([[0, 0], [200, 150], [0, 150], [200, 0], [0, 0]])
-  assert.ok(analyze(cross).reasons.includes('self_intersection'))
+test('纯折返不圈地，定位空档只记录时长', () => {
   const back = samples([[0, 0], [200, 0], [0, 0]])
   assert.ok(analyze(back).reasons.includes('degenerate_loop'))
   const points = samples(square)

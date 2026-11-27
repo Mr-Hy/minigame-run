@@ -382,6 +382,129 @@ test('长空档和局部高速可以圈地，按整场点位累计全国和省�
   assert.deepEqual((await runs.leaderboard('distance', 'province')).entries, [{ rank: 1, subject: '310000', value: 400 }])
 })
 
+test('沙漏与 8 字路线各圈出两块地，每个闭环分别新占或夺地，一次完赛只记一份里程', async () => {
+  const corners = [[-60, -80], [60, 80], [-60, 80], [60, -80], [-60, -80]]
+  for (const occupied of [false, true]) {
+    const runs = createRuns(repository(), grid)
+    if (occupied) {
+      // 原地块覆盖两个三角形各自的右半边。
+      const lot = [[0, -80], [80, -80], [80, 80], [0, 80], [0, -80]]
+        .map(([x, y], i) => fix(1000 + i * 80, x, y))
+      await runs.start('A', 'lot', 1000, lot[0])
+      await runs.finish('A', 'lot', lot.at(-1).timestamp, lot)
+    }
+    // 沙漏的交点在两段线的中途，8 字路线在交点处也有原始定位。
+    const route = occupied ? [corners[0], [0, 0], corners[1], corners[2], [0, 0], ...corners.slice(3)] : corners
+    const points = route.map(([x, y], i) => fix(2000 + i * 40, x, y))
+    await runs.start('B', 'eight', 2000, points[0])
+    await runs.append('B', 'eight', points.slice(1, 3))
+    const result = await runs.finish('B', 'eight', points.at(-1).timestamp, points.slice(3))
+    assert.equal(result.valid_loop, true)
+    assert.deepEqual(result.reasons, [])
+    assert.equal(result.distance_m, 640)
+    assert.equal(result.area_m2, 9600)
+    assert.deepEqual((await runs.get('B', 'eight')).points, points)
+    assert.deepEqual(await runs.finish('B', 'eight', 3000), result)
+    const { territories } = await runs.territories(-180, -90, 180, 90)
+    assert.deepEqual(territories.filter(row => row.owner === 'B').map(row => row.area_m2), [4800, 4800])
+    assert.deepEqual(result.outcomes.filter(row => row.outcome === 'claimed').map(row => row.area_m2),
+      occupied ? [2400, 2400] : [4800, 4800])
+    assert.deepEqual(result.outcomes.filter(row => row.outcome === 'captured').map(row => row.area_m2),
+      occupied ? [2400, 2400] : [])
+    assert.equal((await runs.playerSummary('A')).area_m2, occupied ? 8000 : 0)
+    const score = await runs.achievements('B')
+    assert.equal(score.milestones.total_distance.value, 640)
+    assert.equal(score.milestones.capture_runs.value, occupied ? 1 : 0)
+    assert.equal((await runs.leaderboard('distance')).entries.find(row => row.subject === 'B').value, 640)
+    if (occupied) {
+      const { reports } = await runs.lossReports('A')
+      assert.equal(reports.length, 1)
+      assert.equal(reports[0].area_m2, 4800)
+    }
+  }
+})
+
+test('厘米级尖刺保留实跑里程和主区域，纯往返记录里程但不产生领地', async () => {
+  const runs = createRuns(repository(), grid)
+  const spike = [[0, 0], [50, 0], [50.025, 0], [50, 0], ...square.slice(1)]
+  const points = spike.map(([x, y], i) => fix(1000 + i * 20, x, y))
+  await runs.start('A', 'spike', 1000, points[0])
+  const claimed = await runs.finish('A', 'spike', points.at(-1).timestamp, points)
+  assert.deepEqual(claimed.reasons, [])
+  assert.equal(claimed.valid_loop, true)
+  assert.ok(Math.abs(claimed.distance_m - 400.05) < 1e-6)
+  assert.equal(claimed.area_m2, 10000)
+  assert.deepEqual((await runs.get('A', 'spike')).points, points)
+  assert.equal((await runs.playerSummary('A')).territory_count, 1)
+
+  const outAndBack = [fix(2000), fix(2100, 250), fix(2200)]
+  await runs.start('B', 'out-and-back', 2000, outAndBack[0])
+  const result = await runs.finish('B', 'out-and-back', 2200, outAndBack)
+  assert.equal(result.distance_m, 500)
+  assert.equal(result.valid_loop, false)
+  assert.deepEqual(result.outcomes, [])
+  assert.equal((await runs.playerSummary('B')).territory_count, 0)
+})
+
+test('开放路线按所有实际围住的区域结算，进出闭环的路段只计里程', async t => {
+  // 先走完底线，再用折线在底线上下穿行。交点均在采样点之间。
+  const triangles = [[200, 0], [0, 0], [20, 20], [60, -20], [100, 20], [140, -20], [180, 20], [220, 60]]
+  const cases = [
+    { name: '折线穿越同一直线围成四个三角形', route: triangles, area: 1600, parcels: [400, 400, 400, 400] },
+    { name: '长路线中途绕完十二米见方的小圈', route: [[-300, 0], [0, 0], [12, 0], [12, 12], [0, 12], [0, 0], [0, -200]],
+      area: 144, parcels: [144] },
+    { name: '开口折线两端相距一百二十米', route: [[0, 0], [0, 120], [120, 120], [120, 0]],
+      area: 0, parcels: [] }
+  ]
+  for (const { name, route, area, parcels } of cases) await t.test(name, async () => {
+    const runs = createRuns(repository(), grid)
+    const points = route.map(([x, y], i) => fix(1000 + i * 35, x, y))
+    await runs.start('A', 'open', 1000, points[0])
+    const result = await runs.finish('A', 'open', points.at(-1).timestamp, points.slice(1))
+    assert.equal(result.valid_loop, area > 0)
+    assert.equal(result.area_m2, area)
+    const distance = route.slice(1).reduce((meters, [x, y], i) =>
+      meters + Math.hypot(x - route[i][0], y - route[i][1]), 0)
+    assert.ok(Math.abs(result.distance_m - distance) < 1e-6)
+    const { territories } = await runs.territories(-180, -90, 180, 90)
+    assert.deepEqual(territories.map(land => land.area_m2), parcels)
+    assert.equal((await runs.playerSummary('A')).area_m2, area)
+  })
+})
+
+test('反向重走同一区域和嵌套反绕均保留完整领地，围住的面积只计一次', async t => {
+  const reverse = square.slice(0, -1).reverse()
+  const inner = [[25, 25], [25, 75], [75, 75], [75, 25], [25, 25], [0, 0]]
+  for (const [name, extra] of [['原路反向绕一圈', reverse], ['外圈内部反绕一圈', inner]]) await t.test(name, async () => {
+    const runs = createRuns(repository(), grid)
+    const route = [...square, ...extra]
+    const points = route.map(([x, y], i) => fix(1000 + i * 30, x, y))
+    await runs.start('A', 'rewind', 1000, points[0])
+    const result = await runs.finish('A', 'rewind', points.at(-1).timestamp, points.slice(1))
+    assert.equal(result.valid_loop, true)
+    assert.equal(result.area_m2, 10000)
+    const claimed = result.outcomes.filter(row => row.outcome === 'claimed')
+    assert.equal(claimed.reduce((sum, row) => sum + row.area_m2, 0), 10000)
+    assert.equal((await runs.playerSummary('A')).area_m2, 10000)
+    const sw = grid.toGeo(48, 48), ne = grid.toGeo(52, 52)
+    const center = await runs.territories(sw.longitude, sw.latitude, ne.longitude, ne.latitude)
+    assert.deepEqual(center.territories.map(land => land.owner), ['A'])
+  })
+})
+
+test('整场不足三百米即使围成闭环也只返回重试回执', async () => {
+  const runs = createRuns(repository(), grid)
+  const points = square.map(([x, y], i) => fix(1000 + i * 25, x / 2, y / 2))
+  await runs.start('A', 'short-loop', 1000, points[0])
+  const receipt = await runs.finish('A', 'short-loop', points.at(-1).timestamp, points)
+  assert.deepEqual(receipt, { recorded: false, run_id: 'short-loop', player_id: 'A' })
+  assert.deepEqual(await runs.finish('A', 'short-loop', 2000), receipt)
+  await assert.rejects(runs.get('A', 'short-loop'), { code: 'run_not_found' })
+  assert.deepEqual((await runs.leaderboard('distance')).entries, [])
+  assert.equal((await runs.achievements('A')).milestones.total_distance.value, 0)
+  assert.equal((await runs.playerSummary('A')).territory_count, 0)
+})
+
 test('超速闭环正常夺地、计里程和成就，异常标记随并发结算与重试保留', async () => {
   const runs = createRuns(repository(), grid)
   await runs.start('A', 'owner', 1000, loop[0])

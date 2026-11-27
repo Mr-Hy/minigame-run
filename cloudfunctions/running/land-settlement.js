@@ -4,16 +4,27 @@ const { bounds } = require('./geometry')
 const { compareOrder, queryLandIndex, updateLandIndex } = require('./land-index')
 const { addLand, provinceLandUnits } = require('./score-totals')
 
-async function settleInBounds(repo, grid, map, polygon, player, pace, scores, pack, unpack) {
+async function settleInBounds(repo, grid, map, regions, player, pace, scores, pack, unpack) {
   let lastUnmoved
   function rememberOrder(order) {
     if (!lastUnmoved || compareOrder(order, lastUnmoved) > 0) lastUnmoved = order
   }
   const branches = new Map()
-  const lands = await queryLandIndex(repo, map.viewRoot, [bounds(polygon)], unpack, ref => rememberOrder(ref.lastOrder), branches)
+  const lands = await queryLandIndex(repo, map.viewRoot, regions.map(bounds), unpack, ref => rememberOrder(ref.lastOrder), branches)
   lands.sort((a, b) => compareOrder(a.settlementOrder, b.settlementOrder))
   const placements = new Map()
-  const { lands: settled, outcomes } = grid.settle(lands, player, pace, polygon, placements)
+  let settled = lands
+  const outcomes = []
+  for (const region of regions) {
+    const changes = new Map()
+    const result = grid.settle(settled, player, pace, region, changes)
+    settled = result.lands
+    for (const outcome of result.outcomes) outcomes.push(outcome)
+    // A parcel split by several regions still belongs to the same original index entry.
+    for (const [land, source] of changes) {
+      placements.set(land, placements.has(source) ? placements.get(source) : source)
+    }
+  }
   const retained = new Set(settled.filter(land => land.id != null))
   const removed = lands.filter(land => !retained.has(land))
   const moved = lands.filter(land => retained.has(land) && placements.has(land))
@@ -39,7 +50,8 @@ async function settleInBounds(repo, grid, map, polygon, player, pace, scores, pa
   const revision = map.revision + 1
   let nextId = map.next_id
   const lastPiece = new Map()
-  for (const [land, source] of placements) {
+  for (const land of settled) {
+    const source = placements.get(land)
     if (source) lastPiece.set(source, land)
   }
   const added = []

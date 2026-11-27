@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "image-size": "1.2.1",
+    "jsts": "2.7.1",
     "polygon-clipping": "0.15.7",
     "wx-server-sdk": "4.0.2"
   },

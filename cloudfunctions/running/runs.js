@@ -169,13 +169,13 @@ function createRuns(repo, grid) {
       let reports = []
 
       if (finishing) {
-        const { polygon, ...analysis } = track.analysis
+        const { analysis, regions } = track
         result = { ...analysis, run_id: runId, player_id: player, started_at: run.started_at,
           ended_at: endedAt, outcomes: [] }
-        if (polygon) {
+        if (regions.length) {
           map = checkMap(await repo.getMapView(MAP_KEY))
           if (map.revision && map.settlementRevision !== map.revision) fail(503, 'storage_unavailable', '地图结算索引尚未就绪')
-          const settled = await settleInBounds(repo, grid, map, polygon, player, analysis.pace_s_per_km, scores, pack, unpack)
+          const settled = await settleInBounds(repo, grid, map, regions, player, analysis.pace_s_per_km, scores, pack, unpack)
           result.outcomes = settled.outcomes
           nextMap = settled.nextMap
           holdings = settled.holdings
