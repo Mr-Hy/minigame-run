@@ -115,6 +115,10 @@ function decodeCursor(cursor, range) {
   invalid('invalid_cursor', '跑步记录翻页参数无效')
 }
 
+function historyMetrics({ distance_m, duration_s, pace_s_per_km, best_split_s_per_km, valid_loop, pace_anomaly }) {
+  return { distance_m, duration_s, pace_s_per_km, best_split_s_per_km, valid_loop, pace_anomaly }
+}
+
 async function runHistory(repo, unpack, player, window, bucket, cursor) {
   const { boundaries, keys } = window
   let from = boundaries[0], until = boundaries[boundaries.length - 1]
@@ -127,12 +131,11 @@ async function runHistory(repo, unpack, player, window, bucket, cursor) {
   const range = { from, until }
   const rows = await repo.personalRunRows(player, range, decodeCursor(cursor, range), PAGE_SIZE + 1)
   const runs = await Promise.all(rows.slice(0, PAGE_SIZE).map(async ({ run_id, ended_at, result }) => {
-    const { distance_m, duration_s, pace_s_per_km, valid_loop, pace_anomaly } = result.value ?? await unpack(repo, result)
-    return { run_id, ended_at, distance_m, duration_s, pace_s_per_km, valid_loop, pace_anomaly }
+    return { run_id, ended_at, ...historyMetrics(result.value ?? await unpack(repo, result)) }
   }))
   const last = runs[runs.length - 1]
   const next = rows.length > PAGE_SIZE ? Buffer.from(JSON.stringify([last.ended_at, last.run_id])).toString('base64') : null
   return { runs, next_cursor: next }
 }
 
-module.exports = { runPeriod, runStats, runHistory }
+module.exports = { runPeriod, runStats, runHistory, historyMetrics }

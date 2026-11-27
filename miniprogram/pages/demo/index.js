@@ -1,11 +1,12 @@
 const demo = require('../../lib/demo')
+const { pace } = require('../../lib/run-format')
 const map = require('../../lib/shape-map')
 
 const runners = [
   { id: 'a', name: '甲' },
   { id: 'b', name: '乙' }
 ]
-const paces = [340, 360, 370].map((value) => ({ value, label: demo.time(value) }))
+const paces = [340, 360, 370].map((value) => ({ value, label: pace(value) }))
 const scenarios = [
   { id: 'normal', label: '正常闭环' },
   { id: 'open', label: '提前结束' },
@@ -39,7 +40,7 @@ function summary(result) {
     area: amount(result.size),
     distance: amount(result.meters),
     time: demo.time(result.seconds),
-    pace: result.pace == null ? '—' : demo.time(result.pace) + '/公里',
+    pace: result.pace == null ? '—' : pace(result.pace) + '/公里',
     metrics,
     notes
   }
@@ -305,7 +306,7 @@ Page({
     const selected = land
       ? {
           title: land.owner === 'a' ? '我的领地' : map.territoryNickname(land) + '的领地',
-          pace: demo.time(land.pace) + '/公里',
+          pace: pace(land.pace) + '/公里',
           reason: outcome ? demo.explain(outcome, this.result) : '这片领地保留原来的守地成绩。'
         }
       : { title: '空地', pace: '', reason: '用一条闭合跑线圈住这里，就能首次占领。' }

@@ -53,7 +53,7 @@ test('本人标记常显简称，点地块或昵称均可查看全名', async t 
   assert.equal(page.data.selection.label, '我 · 跑者_00007')
   page.selectMarker({ detail: { markerId: territory.id } })
   assert.equal(page.data.selection.label, '我 · 跑者_00007')
-  assert.match(page.data.selection.detail, /6:00/)
+  assert.match(page.data.selection.detail, /6′00″\/公里/)
 })
 
 test('实地地图选中、缩放、切换和取消时，头像昵称与顶面同步，轨迹仍在实际位置', async t => {
@@ -168,7 +168,7 @@ test('游客进入实地跑步页自动定位一次，仍可手动定位和点�
   assert.equal(page.data.ownerCallouts[0].avatar, '')
   page.selectMarker({ detail: { markerId: marker.id } })
   assert.equal(page.data.selection.area, '1,000 m²')
-  assert.match(page.data.selection.detail, /6:00/)
+  assert.match(page.data.selection.detail, /6′00″\/公里/)
   await page.locate()
   assert.equal(locate.mock.callCount(), 2)
   assert.equal(authorize.mock.callCount(), 1)
@@ -408,7 +408,7 @@ test('头像按地块绑定，头像加载失败后同一领主的多个标记�
   page.selectMarker({ currentTarget: { dataset: { id: '11' } }, detail: {} })
   assert.deepEqual(page._selected, second.label_point)
   assert.equal(page.data.selection.label, other.owner_display_name)
-  assert.match(page.data.selection.detail, /6:00/)
+  assert.match(page.data.selection.detail, /6′00″\/公里/)
 
   const fail = url => page.markerAvatarError({ currentTarget: { dataset: { avatar: url } } })
   fail(other.marker_icon)

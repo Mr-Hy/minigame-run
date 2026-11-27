@@ -63,3 +63,48 @@ test('全程配速异常仍按完整路线统计最快分段', () => {
   assert.equal(effort.fastest_1k, 10)
   assert.equal(effort.fastest_5k, 730)
 })
+
+test('逐公里列出完整分段，最快取其中用时最短的一公里，尾段只列实际用时', () => {
+  const { analysis } = analyze([[0, 0], [1000, 537], [2000, 1023], [3000, 1572], [3038, 1598]])
+  assert.equal(analysis.pace_s_per_km, 526)
+  assert.deepEqual(analysis.kilometer_marks, [{ km: 1, elapsed_s: 537 },
+    { km: 2, elapsed_s: 1023 }, { km: 3, elapsed_s: 1572 }])
+  assert.equal(analysis.best_split_s_per_km, 486)
+  assert.equal(analysis.partial_km_duration_s, 26)
+
+  const short = analyze([[0, 0], [999.99, 510]]).analysis
+  assert.deepEqual(short.kilometer_marks, [])
+  assert.equal(short.best_split_s_per_km, null)
+  assert.equal(short.partial_km_duration_s, 510)
+})
+
+test('一次定位跨多个公里时按距离插值，显示的分段秒数加起来等于总用时', () => {
+  const { analysis } = analyze([[0, 0.25], [3000, 1000.25], [3001, 1000.55]])
+  const [first, last] = analysis.kilometer_marks
+  assert.deepEqual(analysis.kilometer_marks.map(mark => mark.km), [1, 3])
+  assert.ok(Math.abs(first.elapsed_s - 1000 / 3) < 1e-9)
+  const middle = Math.round((first.elapsed_s + last.elapsed_s) / 2)
+  assert.deepEqual([Math.round(first.elapsed_s), middle - Math.round(first.elapsed_s),
+    Math.round(last.elapsed_s) - middle], [333, 334, 333])
+  assert.equal(analysis.best_split_s_per_km, 333)
+  assert.equal(analysis.partial_km_duration_s, 0)
+})
+
+test('整公里分段计入起终点与中途停留，滑动窗口纪录沿用运动路段', () => {
+  const points = [[0, 10], [1000, 300], [1000, 360], [2000, 660], [2000, 700]]
+    .map(([x, timestamp]) => ({ ...grid.toGeo(x, 0), accuracy: 5, timestamp }))
+  const { analysis, fastest_1k } = analyzeRunTrack(grid, 0, 720, points)
+  assert.deepEqual(analysis.kilometer_marks, [{ km: 1, elapsed_s: 300 }, { km: 2, elapsed_s: 720 }])
+  assert.equal(analysis.best_split_s_per_km, 300)
+  assert.equal(analysis.partial_km_duration_s, null)
+  assert.equal(fastest_1k, 290)
+})
+
+test('相距数千公里的定位只保留首末公里标记，整公里终点等待只计入最后一段', () => {
+  const { analysis } = analyze([[0, 0], [5000000, 3750], [5000000, 3800]])
+  assert.deepEqual(analysis.kilometer_marks, [
+    { km: 1, elapsed_s: 0.75 }, { km: 4999, elapsed_s: 3749.25 }, { km: 5000, elapsed_s: 3800 }
+  ])
+  assert.equal(analysis.best_split_s_per_km, 0)
+  assert.equal(analysis.partial_km_duration_s, null)
+})

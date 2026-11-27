@@ -29,7 +29,7 @@ function stats(start) {
       { key: '2026-11-24', count: 0, distance_m: 0, duration_s: 0 }] }
 }
 const row = id => ({ run_id: id, ended_at: ended, distance_m: 5000, duration_s: 1505,
-  pace_s_per_km: 301, valid_loop: false })
+  pace_s_per_km: 301, best_split_s_per_km: 285, valid_loop: false })
 const tap = dataset => ({ currentTarget: { dataset } })
 
 function signedIn(t) {
@@ -42,7 +42,8 @@ test('切换统计周期时迟到响应不覆盖数据，明细锁定服务端�
   const week = deferred()
   const monthly = stats('2026-11-01')
   t.mock.method(api, 'runStats', ({ period }) => period === 'week' ? week.promise : Promise.resolve(monthly))
-  const history = t.mock.method(api, 'runHistory', async () => ({ runs: [row('month-run')], next_cursor: null }))
+  const shortRun = { ...row('short'), distance_m: 500, duration_s: 150, pace_s_per_km: 300, best_split_s_per_km: null }
+  const history = t.mock.method(api, 'runHistory', async () => ({ runs: [row('month-run'), shortRun], next_cursor: null }))
   const view = page()
   const initial = view.onShow()
   await view.switchPeriod(tap({ period: 'month' }))
@@ -55,6 +56,7 @@ test('切换统计周期时迟到响应不覆盖数据，明细锁定服务端�
   assert.equal(history.mock.callCount(), 1)
   assert.equal(view.data.rows[0].time, '07:50')
   assert.equal(view.data.rows[0].date, '11月24日')
+  assert.deepEqual(view.data.rows.map(item => [item.pace, item.bestSplit]), [['5′01″', '4′45″'], ['5′00″', '—']])
   assert.equal(view.data.summary.pace, '5′15″')
 })
 

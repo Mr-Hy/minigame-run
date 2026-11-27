@@ -1,4 +1,4 @@
-const { kilometers } = require('./run-format')
+const { kilometers, pace } = require('./run-format')
 const { areaText, durationText } = require('./map')
 const { drawDistanceNumber } = require('./poster-numerals')
 const config = require('../config')
@@ -171,7 +171,8 @@ function drawStats(ctx, result, top, height, code, dark, area) {
   const rule = dark ? '#6669a5' : '#ceced9'
   const stats = [
     ['用时 · 分:秒', Number.isFinite(result.duration_s) ? durationText(result.duration_s) : '—'],
-    ['配速 · 分/公里', Number.isFinite(result.pace_s_per_km) ? durationText(result.pace_s_per_km) : '—']
+    ['平均配速 / 公里', pace(result.pace_s_per_km)],
+    ['最快配速 / 公里', pace(result.best_split_s_per_km)]
   ]
   const stub = 539
   const stride = (stub - MARGIN) / stats.length
@@ -179,7 +180,7 @@ function drawStats(ctx, result, top, height, code, dark, area) {
   stats.forEach(([label, value], i) => {
     const left = MARGIN + i * stride
     text(ctx, label, left, labelY, 'bold 20px sans-serif', ink, stride - 12)
-    text(ctx, value, left - 1, labelY + 59, 'bold 48px sans-serif', ink, stride - 16)
+    text(ctx, value, left - 1, labelY + 59, 'bold 44px sans-serif', ink, stride - 16)
   })
   if (area) text(ctx, '闭环面积  ' + area, MARGIN, top + 145, '21px sans-serif', ink)
   ctx.fillStyle = rule

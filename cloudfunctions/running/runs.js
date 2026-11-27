@@ -6,7 +6,7 @@ const { provinceDistances, groupCityDistances, claimedProvinceUnits, addLand, ad
   AREA_UNITS, DISTANCE_UNITS, scoreKey } = require('./score-totals')
 const { catalog } = require('./regions')
 const { buildLossReports, publishLossReports, lossReports, lossReportBoundary } = require('./reports')
-const { runStats, runHistory, runPeriod } = require('./run-statistics')
+const { runStats, runHistory, runPeriod, historyMetrics } = require('./run-statistics')
 const { achievements, runPerformance, publishAchievements } = require('./achievements')
 const { queryLandIndex } = require('./land-index')
 const { settleInBounds } = require('./land-settlement')
@@ -199,8 +199,7 @@ function createRuns(repo, grid) {
         reports = buildLossReports(result, blocks && { content: resultBytes, blocks, blockSize: BLOCK_BYTES })
         if (nextRun.result.blocks) {
           // Keep the chart and list fields queryable even when the full result spans blocks.
-          const { distance_m, duration_s, pace_s_per_km, valid_loop, pace_anomaly } = result
-          nextRun.result.value = { distance_m, duration_s, pace_s_per_km, valid_loop, pace_anomaly }
+          nextRun.result.value = historyMetrics(result)
         }
       }
 

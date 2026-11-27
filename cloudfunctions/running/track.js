@@ -3,6 +3,11 @@
 const { enclosedRegions } = require('./enclosed-regions')
 const EPSILON_M = 1e-6
 
+function crossingTime(previous, next, distance) {
+  const fraction = (distance - previous.distance) / (next.distance - previous.distance)
+  return previous.departure + fraction * (next.arrival - previous.departure)
+}
+
 // Between samples the time at a distance is linear. A fastest window must
 // therefore have a sampled start or end. Scan both cases in distance order.
 function fastestFromAnchors(path, offset) {
@@ -20,9 +25,7 @@ function fastestFromAnchors(path, offset) {
       // starting at the stop can begin on departure.
       time = offset > 0 ? next.arrival : next.departure
     } else {
-      const prev = path[match - 1]
-      const fraction = (target - prev.distance) / (next.distance - prev.distance)
-      time = prev.departure + fraction * (next.arrival - prev.departure)
+      time = crossingTime(path[match - 1], next, target)
     }
     best = Math.min(best, offset > 0 ? time - anchor.departure : anchor.arrival - time)
   }
@@ -47,6 +50,39 @@ function timedPath(grid, fixes, route) {
   return path
 }
 
+function kilometerSplits(path, distance, start, end) {
+  const marks = []
+  const fullKm = Math.floor((distance + EPSILON_M) / 1000)
+  const hasPartial = distance - fullKm * 1000 > EPSILON_M
+  let previousKm = 0, previousSeconds = 0, best = null
+  function addMark(km, elapsed) {
+    const seconds = Math.round(elapsed)
+    // Between marks, differences of rounded linear times vary by at most one second.
+    const fastest = Math.floor((seconds - previousSeconds) / (km - previousKm))
+    best = best === null ? fastest : Math.min(best, fastest)
+    marks.push({ km, elapsed_s: elapsed })
+    previousKm = km
+    previousSeconds = seconds
+  }
+  for (let i = 1; i < path.length; i++) {
+    const next = path[i]
+    const firstKm = previousKm + 1
+    const lastKm = Math.floor((next.distance + EPSILON_M) / 1000)
+    if (lastKm < firstKm) continue
+    const elapsedAt = km => crossingTime(path[i - 1], next, Math.min(km * 1000, next.distance)) - start
+    // All km boundaries in this GPS leg lie on the same linear time interval.
+    if (firstKm < lastKm) addMark(firstKm, elapsedAt(firstKm))
+    const atFinish = lastKm === fullKm && !hasPartial
+    if (atFinish && end > next.arrival && firstKm < lastKm - 1) {
+      // Keep the time before the final km so finish-line waiting only extends that split.
+      addMark(lastKm - 1, elapsedAt(lastKm - 1))
+    }
+    addMark(lastKm, atFinish ? end - start : elapsedAt(lastKm))
+  }
+  return { kilometer_marks: marks, best_split_s_per_km: best,
+    partial_km_duration_s: hasPartial ? Math.round(end - start) - previousSeconds : null }
+}
+
 function analyzeRunTrack(grid, start, end, points) {
   const fixes = grid.validFixes(start, end, points)
   const { polygon, ...analysis } = grid.analyzeFixes(start, end, fixes)
@@ -63,7 +99,8 @@ function analyzeRunTrack(grid, start, end, points) {
     analysis.reason_messages = regions.length ? [] : ['轨迹没有围出面积']
   }
   const path = analysis.distance_m < 1000 - EPSILON_M ? [] : timedPath(grid, fixes, route)
-  return { analysis, regions, paths: route.length ? [route] : [],
+  return { analysis: { ...analysis, ...kilometerSplits(path, analysis.distance_m, start, end) },
+    regions, paths: route.length ? [route] : [],
     fastest_1k: fastestEffort(path, 1000), fastest_5k: fastestEffort(path, 5000) }
 }
 

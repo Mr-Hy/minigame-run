@@ -1,5 +1,6 @@
 const api = require('../../lib/api')
-const { areaText, durationText, frame, outcomeLayers } = require('../../lib/map')
+const { areaText, frame, outcomeLayers } = require('../../lib/map')
+const { pace } = require('../../lib/run-format')
 
 const pendingGrants = new Map()
 const requests = new Map()
@@ -59,7 +60,7 @@ function reportRow(report) {
     id: report.id, name: report.challenger_name,
     time: time.getFullYear() + '-' + pad(time.getMonth() + 1) + '-' + pad(time.getDate()) + ' ' +
       pad(time.getHours()) + ':' + pad(time.getMinutes()),
-    area: areaText(report.area_m2), pace: durationText(report.pace_s_per_km),
+    area: areaText(report.area_m2), pace: pace(report.pace_s_per_km),
     regions: report.regions.map((region, index) => ({
       index, latitude: region.latitude, longitude: region.longitude, area: areaText(region.area_m2),
       coordinates: region.latitude.toFixed(5) + ', ' + region.longitude.toFixed(5)

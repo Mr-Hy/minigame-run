@@ -1,6 +1,7 @@
 const api = require('../../lib/api')
 const results = require('../../lib/results')
 const { achievementRows } = require('../../lib/achievements')
+const { pace } = require('../../lib/run-format')
 const { areaText, createTrackPlayback, durationText, frame, outcomeLayers, ownerText,
   playbackFrame, recordedTrackMap, territoryAt } = require('../../lib/map')
 const { prepareReplaySurface, drawReplayFrame } = require('../../lib/replay-canvas')
@@ -8,6 +9,38 @@ const runPoster = require('../../lib/run-poster')
 const { callWx } = require('../../lib/location')
 
 const PLAYBACK_DURATION_MS = 3500
+const SPLITS_PER_PAGE = 10
+
+function splitView(result, page = 0) {
+  const marks = result.kilometer_marks || []
+  const count = marks.length ? marks[marks.length - 1].km : 0
+  const pages = Math.ceil(count / SPLITS_PER_PAGE)
+  const first = page * SPLITS_PER_PAGE + 1
+  const last = Math.min(count, first + SPLITS_PER_PAGE - 1)
+  const rows = []
+  let previous = { km: 0, elapsed_s: 0 }
+  let slowest = 0
+  for (const mark of marks) {
+    const length = mark.km - previous.km
+    const elapsed = mark.elapsed_s - previous.elapsed_s
+    const roundedDuration = Math.round(mark.elapsed_s) - Math.round(previous.elapsed_s)
+    slowest = Math.max(slowest, Math.ceil(roundedDuration / length))
+    // Sparse GPS samples can span several kilometers at the same interpolated speed.
+    const boundary = km => Math.round(km === mark.km ? mark.elapsed_s :
+      previous.elapsed_s + (km - previous.km) / length * elapsed)
+    for (let km = Math.max(first, previous.km + 1); km <= Math.min(last, mark.km); km++) {
+      const seconds = boundary(km) - boundary(km - 1)
+      rows.push({ km, seconds, pace: pace(seconds), best: seconds === result.best_split_s_per_km })
+    }
+    previous = mark
+  }
+  const tail = result.partial_km_duration_s
+  return {
+    splitPage: page, splitPages: pages,
+    splitRows: rows.map(row => ({ ...row, width: slowest ? Math.round(100 * row.seconds / slowest) : 0 })),
+    tailTime: page + 1 >= pages && tail != null ? pace(tail) : ''
+  }
+}
 
 const categories = [
   { key: 'claimed', label: '新占' }, { key: 'captured', label: '夺得' },
@@ -17,7 +50,7 @@ const categories = [
 function detail(region, result) {
   if (region.outcome === 'claimed') return '首次占领空地'
   const owner = ownerText(region.previous_owner, result.player_id)
-  const prior = durationText(region.previous_pace_s_per_km)
+  const prior = pace(region.previous_pace_s_per_km) + '/公里'
   if (region.outcome === 'captured') return '从' + owner + '手中夺得 · 原配速 ' + prior
   if (region.outcome === 'defended') {
     return region.pace_s_per_km < region.previous_pace_s_per_km
@@ -289,11 +322,13 @@ Page({
     const time = new Date((result.ended_at + 8 * 3600) * 1000)
     this.setData({
       found: true, valid: result.valid_loop, title,
+      bestSplit: pace(result.best_split_s_per_km),
+      ...splitView(result),
       achievements, achievementPopup, showAllAchievements: false,
       showReportEntry: result.valid_loop && (acquired > 0 || totals.defended > 0),
       day: time.getUTCFullYear() + ' 年 ' + (time.getUTCMonth() + 1) + ' 月 ' + time.getUTCDate() + ' 日',
       meters: Math.round(result.distance_m), duration: durationText(result.duration_s),
-      pace: result.pace_s_per_km == null ? '—' : durationText(result.pace_s_per_km),
+      pace: pace(result.pace_s_per_km),
       area: areaText(result.area_m2), reasons: result.reason_messages || [],
       gap: Math.round(result.max_gap_s), closure: result.closure_distance_m == null ? '—' : Math.round(result.closure_distance_m),
       filters: categories.map(c => ({ ...c, area: areaText(totals[c.key]) }))
@@ -310,6 +345,11 @@ Page({
   onUnload() { this._view++; this.clearReplayClock(); this._playback = null },
 
   filter(e) { this.select(e.currentTarget.dataset.key) },
+
+  changeSplitPage(e) {
+    const page = this.data.splitPage + Number(e.currentTarget.dataset.step)
+    if (page >= 0 && page < this.data.splitPages) this.setData(splitView(this.result, page))
+  },
 
   select(key, selectedRegion = null) {
     this.filtered = this.result.outcomes.filter(region => region.outcome === key)
@@ -333,7 +373,7 @@ Page({
     const start = page * 12
     const rows = this.filtered.slice(start, start + 12).map((region, i) => ({
       index: start + i, area: areaText(region.area_m2), detail: detail(region, this.result),
-      pace: durationText(region.pace_s_per_km)
+      pace: pace(region.pace_s_per_km)
     }))
     this.setData({ rows, page, pages: Math.ceil(this.filtered.length / 12) })
   },

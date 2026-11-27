@@ -1,5 +1,5 @@
 const api = require('../../lib/api')
-const { kilometers, duration } = require('../../lib/run-format')
+const { kilometers, duration, pace } = require('../../lib/run-format')
 
 const tabs = [
   { key: 'week', label: '本周' },
@@ -8,12 +8,6 @@ const tabs = [
 ]
 const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 const chinaOffset = 8 * 3600 * 1000
-
-function pace(seconds) {
-  if (seconds == null) return '—'
-  const total = Math.round(seconds)
-  return Math.floor(total / 60) + '′' + String(total % 60).padStart(2, '0') + '″'
-}
 
 function summaryView(entry) {
   return {
@@ -56,6 +50,7 @@ function runRow(run) {
   return {
     id: run.run_id, date: calendarLabel(ended.slice(0, 10), false), time: ended.slice(11, 16),
     km: kilometers(run.distance_m), duration: duration(run.duration_s), pace: pace(run.pace_s_per_km),
+    bestSplit: pace(run.best_split_s_per_km),
     validLoop: run.valid_loop
   }
 }

@@ -1,4 +1,5 @@
 const { labelClearance } = require('./relief-geometry')
+const { pace } = require('./run-format')
 const { Grid, insidePoint } = require('./generated/geometry')
 const grid = new Grid()
 
@@ -148,12 +149,12 @@ function contains(geometry, p) {
 function explain(event, result) {
   if (event.kind === 'claimed') return '原为空地，跑回起点后首次占领。'
   if (event.kind === 'defended') return '再次圈住自己的领地，这部分保留两圈中更快的配速。'
-  const prior = names[event.previousOwner] + '的守地配速 ' + time(event.previousPace)
+  const prior = names[event.previousOwner] + '的守地配速 ' + pace(event.previousPace) + '/公里'
+  const current = '本圈 ' + pace(result.pace) + '/公里'
   if (event.kind === 'captured')
-    return '本圈 ' + time(result.pace) + ' 快于' + prior + '，重叠部分易主。'
+    return current + ' 快于' + prior + '，重叠部分易主。'
   return (
-    '本圈 ' +
-    time(result.pace) +
+    current +
     (result.pace === event.previousPace ? ' 与' : ' 慢于') +
     prior +
     (result.pace === event.previousPace ? ' 相同，' : '，') +

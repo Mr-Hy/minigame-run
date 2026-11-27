@@ -42,7 +42,7 @@
       </view>
     </view>
     <view class="control-line">
-      <view class="field-title">配速<text class="unit">/公里</text></view>
+      <view class="field-title">平均配速<text class="unit">/公里</text></view>
       <view class="switch">
         <button wx:for="{{paces}}" wx:key="value" class="pace {{pace === item.value ? 'active' : ''}}" data-pace="{{item.value}}"
           bindtap="paceChange">{{item.label}}</button>
@@ -70,7 +70,7 @@
   <view wx:if="{{last}}" class="result">
     <view class="result-head"><text class="map-title">第 {{round}} 次 · 跑者{{last.name}}</text><text class="result-patch {{last.valid ? '' : 'invalid'}}">{{last.valid ? '有效圈地' : '未圈地'}}</text></view>
     <view wx:for="{{last.reasons}}" wx:key="*this" class="note invalid">{{item}}</view>
-    <view class="result-line">{{last.distance}} 米　·　用时 {{last.time}}　·　{{last.pace}}</view>
+    <view class="result-line">{{last.distance}} 米　·　用时 {{last.time}}　·　平均配速 {{last.pace}}</view>
     <view class="result-line">有效点 {{last.samples}} 个　·　首尾相距 {{last.closure}}　·　最长间隔 {{last.gap}} 秒</view>
     <block wx:if="{{last.valid}}">
     <view class="area-head">圈内面积 <text>{{last.area}} ㎡</text></view>

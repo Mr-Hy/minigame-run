@@ -1,7 +1,7 @@
 .sheet { padding: 44rpx 32rpx 72rpx; }
 .date, .detail, .legend, .empty { color: #596c60; font-size: 25rpx; line-height: 1.6; }
 .headline { font-size: 56rpx; font-weight: 750; margin: 8rpx 0 32rpx; }
-.scoreboard { display: flex; padding: 38rpx 14rpx; border-radius: 24rpx; background: #204d3c; color: #f5f5e9; }
+.scoreboard { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 24rpx; padding: 32rpx 14rpx; border-radius: 24rpx; background: #204d3c; color: #f5f5e9; }
 .metric { flex: 1; display: flex; flex-direction: column; padding-left: 20rpx; font-size: 23rpx; color: #d0dfc9; }
 .value { color: #fffdf5; font-size: 49rpx; font-weight: 650; font-variant-numeric: tabular-nums; margin-bottom: 4rpx; }
 .share-action { width: 100% !important; margin: 16rpx 0 0; padding: 16rpx; border-radius: 16rpx; background: #e5ebdd; color: #23543d; font-size: 28rpx; line-height: 1.6; }
@@ -10,6 +10,12 @@
 .section-title { font-size: 36rpx; font-weight: 650; }
 .section-head, .legend, .row, .pagination { display: flex; align-items: center; justify-content: space-between; }
 .section-head { gap: 10rpx; margin: 40rpx 0 18rpx; }
+.split-row { display: flex; align-items: center; gap: 20rpx; padding: 8rpx 0; font-size: 26rpx; font-variant-numeric: tabular-nums; }
+.split-bar { flex: 1; height: 16rpx; overflow: hidden; border-radius: 8rpx; background: #e1e5da; }
+.split-fill { height: 100%; border-radius: inherit; background: #88a78f; }
+.split-fastest { background: #245740; }
+.split-time { min-width: 86rpx; text-align: right; font-weight: 650; }
+.split-tail { padding: 12rpx 0; color: #596c60; font-size: 25rpx; }
 .total { color: #596c60; font-size: 24rpx; }
 .filters { display: grid; grid-template-columns: 1fr 1fr; gap: 10rpx; }
 .chip, .pagination button { min-width: 0; margin: 0; padding: 12rpx 4rpx; flex: 1; border-radius: 12rpx; background: #e6eade; color: #375645; font-weight: 500; font-size: 24rpx; line-height: 1.5; }

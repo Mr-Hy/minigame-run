@@ -29,6 +29,37 @@ function mount(options) {
   return page
 }
 
+test('结算显示全程平均与最快整公里配速，并按里程列出分段和尾段用时', () => {
+  const page = mount({ run_id: 'pace-example' })
+  const run = { ...record('pace-example'), distance_m: 3038, duration_s: 1598,
+    pace_s_per_km: 526, best_split_s_per_km: 486, partial_km_duration_s: 26,
+    kilometer_marks: [{ km: 1, elapsed_s: 537 }, { km: 2, elapsed_s: 1023 }, { km: 3, elapsed_s: 1572 }] }
+  page.showResult(run)
+  assert.equal(page.data.duration, '26:38')
+  assert.equal(page.data.pace, '8′46″')
+  assert.equal(page.data.bestSplit, '8′06″')
+  assert.deepEqual(page.data.splitRows.map(row => [row.km, row.pace, row.best]),
+    [[1, '8′57″', false], [2, '8′06″', true], [3, '9′09″', false]])
+  assert.equal(page.data.tailTime, '0′26″')
+
+  page.showResult({ ...record('short-run'), kilometer_marks: [], best_split_s_per_km: null, partial_km_duration_s: 145 })
+  assert.equal(page.data.pace, '5′22″')
+  assert.equal(page.data.bestSplit, '—')
+  assert.equal(page.data.tailTime, '2′25″')
+  assert.deepEqual(page.data.splitRows, [])
+})
+
+test('定位跨多个整公里时按页还原各段，尾段只出现在末页', () => {
+  const page = mount({ run_id: 'long-run' })
+  page.showResult({ ...record('long-run'), kilometer_marks: [{ km: 1, elapsed_s: 333.4 }, { km: 12, elapsed_s: 4000.8 }],
+    best_split_s_per_km: 333, partial_km_duration_s: 0 })
+  assert.equal(page.data.splitRows.length, 10)
+  assert.equal(page.data.tailTime, '')
+  page.changeSplitPage({ currentTarget: { dataset: { step: 1 } } })
+  assert.deepEqual(page.data.splitRows.map(row => [row.km, row.seconds]), [[11, 333], [12, 334]])
+  assert.equal(page.data.tailTime, '0′00″')
+})
+
 function replaySurface() {
   const canvas = {
     requestAnimationFrame(callback) { return setTimeout(() => callback(Date.now()), 16) },

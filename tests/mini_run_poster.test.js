@@ -59,7 +59,7 @@ test('生成海报保留定位断点、长轨迹端点和北京时间的完赛�
   const map = recordedTrackMap(points)
   const path = await generateRunPoster(page, {
     ended_at: Date.parse('2026-11-26T16:02:00Z') / 1000,
-    distance_m: 5300, duration_s: 1860, pace_s_per_km: 351,
+    distance_m: 3038, duration_s: 1598, pace_s_per_km: 526, best_split_s_per_km: 486,
     valid_loop: true, area_m2: 220
   }, map)
   assert.equal(path, 'wxfile://tmp/run.png')
@@ -67,7 +67,11 @@ test('生成海报保留定位断点、长轨迹端点和北京时间的完赛�
   assert.ok(text.includes('微信小程序') && text.includes('跑步出圈'))
   assert.ok(!text.includes('长按进入小程序'))
   assert.ok(images.includes('/assets/run-poster-runner.png'))
-  for (const value of ['2026.11.27', '5.30', '31:00', '5:51', '220 m²']) assert.ok(text.includes(value))
+  for (const value of ['2026.11.27', '3.04', '220 m²']) assert.ok(text.includes(value))
+  const statsStart = text.indexOf('用时 · 分:秒')
+  assert.deepEqual(text.slice(statsStart, statsStart + 6), [
+    '用时 · 分:秒', '26:38', '平均配速 / 公里', '8′46″', '最快配速 / 公里', '8′06″'
+  ])
   assert.equal(paths.length, 2)
   assert.ok(paths[0].length < 600)
   assert.equal(paths[0][0][0], paths[1].at(-1)[0])
@@ -93,7 +97,8 @@ test('无轨迹或缺少配速时仍可导出成绩图', async t => {
   assert.deepEqual(paths, [])
   assert.ok(text.includes('0.30'))
   assert.ok(text.includes('3:00'))
-  assert.ok(text.includes('—'))
+  assert.equal(text[text.indexOf('最快配速 / 公里') + 1], '—')
+  assert.equal(text[text.indexOf('平均配速 / 公里') + 1], '—')
   assert.ok(!text.includes('闭环面积'))
 })
 

@@ -470,17 +470,17 @@ test('个人跑步从有效里程满 300 米起记，按北京时间归档并汇
   assert.equal(empty.lifetime.avg_pace_s_per_km, null)
   assert.equal(empty.buckets.length, 7)
 
-  async function seed(run_id, date, distance_m, duration_s, packed, player_id = player) {
+  async function seed(run_id, date, distance_m, duration_s, { packed, player_id = player, best_split_s_per_km = null } = {}) {
     const ended_at = epoch(date)
     const value = { distance_m, duration_s, pace_s_per_km: distance_m ? Math.round(1000 * duration_s / distance_m) : null,
-      valid_loop: false }
+      best_split_s_per_km, valid_loop: false }
     const result = packed ? { blocks: ['blob-' + run_id] } : { value }
     if (packed) await repo.set(result.blocks[0], { bytes: Buffer.from(JSON.stringify(value)).toString('base64') })
     await repo.set(run_id, { run_id, player_id, ended_at, started_at: ended_at - duration_s, result })
   }
   await seed('leap', '2024-02-29T23:59:59', 500, 125)
   await seed('sunday', '2024-12-29T23:59:59.999', 700, 420)
-  await seed('monday', '2024-12-30T00:00:00', 1200, 540, true)
+  await seed('monday', '2024-12-30T00:00:00', 1200, 540, { packed: true, best_split_s_per_km: 420 })
   const endedAt = epoch('2024-12-31T23:59:59')
   const cases = [['standing', 0, 60], ['short', 299.99, 60], ['fast-short', 200, 20], ['boundary', 300, 60], ['too-fast', 400, 60]]
   for (const [run_id, meters, seconds] of cases) {
@@ -508,8 +508,8 @@ test('个人跑步从有效里程满 300 米起记，按北京时间归档并汇
   }
   assert.equal((await call('achievements')).milestones.total_distance.value, 700)
   assert.equal((await call('leaderboard', { metric: 'distance', period: 'week' })).entries[0].value, 700)
-  await seed('new-year', '2025-01-01T00:00:00', 3000, 900)
-  await seed('unrelated', '2025-01-01T00:00:00', 8000, 100, false, stranger)
+  await seed('new-year', '2025-01-01T00:00:00', 3000, 900, { best_split_s_per_km: 285 })
+  await seed('unrelated', '2025-01-01T00:00:00', 8000, 100, { player_id: stranger })
   await repo.set('live', { run_id: 'live', player_id: player, ended_at: null, result: null })
 
   const weekly = await call('runStats', { player_id: stranger })
@@ -533,13 +533,16 @@ test('个人跑步从有效里程满 300 米起记，按北京时间归档并汇
   assert.deepEqual(december.runs.map(r => r.run_id), ['too-fast', 'boundary', 'monday', 'sunday'])
   assert.equal(december.runs[0].pace_anomaly, true)
   assert.equal(december.runs[1].pace_anomaly, false)
+  assert.equal(december.runs[1].best_split_s_per_km, null)
   const { pace_anomaly, ...mondayRun } = december.runs[2]
   assert.equal(pace_anomaly, undefined)
   assert.deepEqual(mondayRun, { run_id: 'monday', ended_at: epoch('2024-12-30T00:00:00'),
-    distance_m: 1200, duration_s: 540, pace_s_per_km: 450, valid_loop: false })
+    distance_m: 1200, duration_s: 540, pace_s_per_km: 450, best_split_s_per_km: 420, valid_loop: false })
   assert.equal(december.next_cursor, null)
   now += 7 * 86400
-  assert.equal((await call('runHistory', { period: 'week', start: weekly.start })).runs.length, 4)
+  const weekRuns = (await call('runHistory', { period: 'week', start: weekly.start })).runs
+  assert.equal(weekRuns.length, 4)
+  assert.deepEqual([weekRuns[0].pace_s_per_km, weekRuns[0].best_split_s_per_km], [300, 285])
   assert.equal((await call('runStats', { offset: 1 })).error.code, 'invalid_offset')
   assert.equal((await call('runStats', { period: 'day' })).error.code, 'invalid_period')
   assert.equal((await call('runHistory', { bucket: '2025-02-30' })).error.code, 'invalid_bucket')
@@ -558,9 +561,9 @@ test('同一完赛时间按编号稳定翻页，明细查询可以省略轨迹�
   const who = { APPID: 'diary', OPENID: 'runner' }, player = playerId(who)
   await repo.set('a' + player.slice(3, 34), { runner_number: 1, avatar_url: 'cloud://avatar', display_name: '跑者' })
   const ended_at = Date.parse('2026-11-24T10:00:00+08:00') / 1000
-  const run = { player_id: player, ended_at, started_at: ended_at - 60, point_count: 3,
+  const run = { player_id: player, ended_at, started_at: ended_at - 960, point_count: 3,
     points: { blocks: ['unread-track'] } }
-  const stats = { distance_m: 300, duration_s: 60, pace_s_per_km: 200, valid_loop: false }
+  const stats = { distance_m: 2000, duration_s: 960, pace_s_per_km: 480, best_split_s_per_km: 445, valid_loop: false }
   const full = { ...stats, reason_messages: ['轨迹未闭合'], outcomes: [] }
   await repo.set('result-block', { bytes: Buffer.from(JSON.stringify(full)).toString('base64') })
   const key = id => 'r' + createHash('sha256').update(id).digest('hex').slice(0, 31)
@@ -578,6 +581,7 @@ test('同一完赛时间按编号稳定翻页，明细查询可以省略轨迹�
   await repo.set(key('newer'), { ...run, run_id: 'newer', ended_at: ended_at + 1, result: { value: stats } })
   const next = await call('runHistory', { bucket: '2026-11-24', cursor: first.next_cursor })
   assert.deepEqual(next.runs.map(r => r.run_id), ['tie-02', 'tie-01', 'tie-00'])
+  assert.ok([...first.runs, ...next.runs].every(row => row.pace_s_per_km === 480 && row.best_split_s_per_km === 445))
   assert.equal(next.next_cursor, null)
   const record = await call('getRun', { run_id: 'tie-01', include_points: false })
   assert.equal('points' in record, false)

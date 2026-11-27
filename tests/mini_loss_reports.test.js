@@ -102,7 +102,7 @@ test('已登录跑者查看战报时，分页使用服务端游标并显示地�
   await page.loadMore()
   assert.deepEqual(read.mock.calls.map(call => call.arguments), [[null, 'alice'], [8, 'alice']])
   assert.equal(page.data.cursor, null)
-  assert.equal(page.data.rows[1].pace, '5:40')
+  assert.equal(page.data.rows[1].pace, '5′40″')
   assert.equal(boundary.mock.callCount(), 0)
   await page.showLocation({ currentTarget: { dataset: { report: 1, region: 0 } } })
   assert.equal(page.data.selected.id, 'old')

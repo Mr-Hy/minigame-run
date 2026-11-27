@@ -14,5 +14,6 @@ const end = points[points.length - 1].timestamp
 module.exports = {
   points,
   result: { ...grid.analyze(start, end, points), run_id: 'temporary-walk', player_id: 'example',
+    kilometer_marks: [], best_split_s_per_km: null, partial_km_duration_s: end - start,
     started_at: start, ended_at: end, outcomes: [] }
 }

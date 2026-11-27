@@ -13,11 +13,26 @@
   <view class="scoreboard">
     <view class="metric"><text class="value">{{meters}}</text><text>距离 / 米</text></view>
     <view class="metric"><text class="value">{{duration}}</text><text>用时 / 分:秒</text></view>
-    <view class="metric"><text class="value">{{pace}}</text><text>配速 / 公里</text></view>
+    <view class="metric"><text class="value">{{pace}}</text><text>平均配速 / 公里</text></view>
+    <view class="metric"><text class="value">{{bestSplit}}</text><text>最快配速 / 公里</text></view>
   </view>
   <button class="share-action" bindtap="shareRun" disabled="{{sharing || routeLoading}}" loading="{{sharing}}"
     aria-label="分享跑步记录，可发给好友、分享到朋友圈或保存图片">{{sharing ? '正在打开海报' : '分享跑步记录'}}</button>
   <view wx:if="{{shareHint}}" class="detail share-hint">{{shareHint}}</view>
+  <block wx:if="{{splitRows.length || tailTime}}">
+    <view class="section-head"><text class="section-title">每公里配速</text></view>
+    <view wx:for="{{splitRows}}" wx:key="km" class="split-row">
+      <text>第 {{item.km}} 公里</text>
+      <view class="split-bar"><view class="split-fill {{item.best ? 'split-fastest' : ''}}" style="width: {{item.width}}%;"></view></view>
+      <text class="split-time">{{item.pace}}</text>
+    </view>
+    <view wx:if="{{tailTime}}" class="split-tail">不足 1 公里用时 {{tailTime}}</view>
+    <view wx:if="{{splitPages > 1}}" class="pagination">
+      <button data-step="-1" bindtap="changeSplitPage" disabled="{{splitPage === 0}}">上一页</button>
+      <text>{{splitPage + 1}} / {{splitPages}}</text>
+      <button data-step="1" bindtap="changeSplitPage" disabled="{{splitPage + 1 >= splitPages}}">下一页</button>
+    </view>
+  </block>
   <view class="section-head">
     <text class="section-title">行走轨迹</text>
     <view class="route-key" wx:if="{{routeMap && !routeLoading}}"><text class="start-key">起点</text><text class="end-key">{{replaying ? '回放位置' : '终点'}}</text></view>

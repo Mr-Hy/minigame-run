@@ -92,8 +92,8 @@ function createRepository(db) {
         .orderBy('value.ended_at', 'desc').orderBy('value.run_id', 'desc').limit(limit)
         .field({ 'value.run_id': true, 'value.ended_at': true, 'value.result.blocks': true,
           'value.result.value.distance_m': true, 'value.result.value.duration_s': true,
-          'value.result.value.pace_s_per_km': true, 'value.result.value.valid_loop': true,
-          'value.result.value.pace_anomaly': true }).get()
+          'value.result.value.pace_s_per_km': true, 'value.result.value.best_split_s_per_km': true,
+          'value.result.value.valid_loop': true, 'value.result.value.pace_anomaly': true }).get()
       return data.map(doc => doc.value)
     },
     async lossReportRows(player, before, limit) {

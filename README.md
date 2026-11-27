@@ -129,6 +129,8 @@ node --test tests/*.test.js
 
 结算返回 `distance_m`、`duration_s`、`pace_s_per_km`、`area_m2`、`valid_loop` 和圈地失败原因 `reasons`。首尾距离 `closure_distance_m` 和最长定位空档 `max_gap_s` 供查看轨迹。定位空档和局部速度突变均不单独否决整场，也不扣除相应路段的里程。
 
+结算和跑步记录同时显示全程平均配速 `pace_s_per_km` 与最快整公里配速 `best_split_s_per_km`，例如 `8′46″/公里`。最快配速取从起点依次跑完的各整公里中用时最短的一段，全程不足一公里时显示「—」。结算明细的 `kilometer_marks` 保存公里数 `km` 和自开跑起的累计秒数 `elapsed_s`。定位点之间按距离插值，连续跨过多公里时仅保留还原各段所需的标记。相邻公里累计用时各自四舍五入至整秒后相减，即为分段用时。末尾不足一公里单列实际用时 `partial_km_duration_s`。
+
 `outcomes` 中每一项是一个连通区域，包含 `geometry`、`area_m2`、`previous_owner`、`previous_pace_s_per_km`、`owner` 和 `pace_s_per_km`。
 
 | outcome | 区域归属 |

@@ -3,6 +3,7 @@ const tracker = require('../../lib/tracker')
 const results = require('../../lib/results')
 const { callWx, issues, deviceLocationIssue, getMapPosition } = require('../../lib/location')
 const { shortNickname } = require('../../lib/nickname')
+const { pace } = require('../../lib/run-format')
 const { territoryAt, pickTerritorySurface, inBounds, areaText, territoryLayers, trackLines, durationText } = require('../../lib/map')
 const { ownTerritory } = require('../../lib/territory-theme')
 
@@ -294,7 +295,7 @@ Page({
     this._outlines = layer.lines
     const selection = !this._selected ? null : selected ? {
       label: territoryOwner(selected, player), area: areaText(selected.area_m2),
-      detail: '守地配速 ' + durationText(selected.pace_s_per_km) + ' / 公里'
+      detail: '守地配速 ' + pace(selected.pace_s_per_km) + '/公里'
     } : { label: '空地', area: '', detail: '有效闭环可首次占领' }
     const pin = layer.relief ? layer.relief.liftedPoint(this._selected) : this._selected
     const ownSelection = player && selected?.owner === player
@@ -393,7 +394,7 @@ Page({
   showMetrics(s, elapsed) {
     const distance = s.distance || 0
     this.setData({ distanceText: (distance / 1000).toFixed(2), elapsedText: durationText(elapsed),
-      paceText: distance > 0 ? durationText(elapsed * 1000 / distance) : '—' })
+      paceText: distance > 0 ? pace(elapsed * 1000 / distance) : '—' })
   },
 
   showTrack(s) {

@@ -12,4 +12,10 @@ function duration(seconds) {
   return total + '秒'
 }
 
-module.exports = { kilometers, duration }
+function pace(secondsPerKm) {
+  if (!Number.isFinite(secondsPerKm) || secondsPerKm < 0) return '—'
+  const total = Math.round(secondsPerKm)
+  return Math.floor(total / 60) + '′' + String(total % 60).padStart(2, '0') + '″'
+}
+
+module.exports = { kilometers, duration, pace }
