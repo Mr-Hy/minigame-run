@@ -164,7 +164,7 @@ test('running routes use the WeChat caller, preserve map ownership and keep trac
   const other = await call('login', { avatar_base64 }, bob)
   const expected = { expected_player: account.player_id }
   for (const action of ['login', 'map', 'leaderboard', 'me', 'start', 'append', 'finish', 'getRun', 'logout', 'updateAvatar', 'updateNickname',
-    'achievements', 'lossReports', 'lossReportBoundary', 'subscribeLossNotice']) {
+    'achievements', 'lossReports', 'lossReportBoundary', 'subscribeLossNotice', 'shareStandings']) {
     const { error } = await call(action, expected, bob)
     assert.equal(error.status, 409, action)
     assert.equal(error.code, 'account_changed', action)
@@ -183,6 +183,17 @@ test('running routes use the WeChat caller, preserve map ownership and keep trac
   assert.equal((await call('append', { run_id, points: points.slice(1) })).point_count, 5)
   const result = await call('finish', { run_id, ended_at: 1120 })
   assert.equal(result.area_m2, 10000)
+  assert.equal((await call('shareStandings', { run_id }, {})).error.code, 'login_required')
+  assert.equal((await call('shareStandings', { run_id, player_id: account.player_id }, bob)).error.code, 'run_not_found')
+  assert.equal((await call('shareStandings', { run_id: '$bad' })).error.code, 'invalid_run_id')
+  const standings = await call('shareStandings', { run_id, ...expected })
+  assert.deepEqual(standings.national.area, { rank: 1, value: 10000 })
+  assert.deepEqual(standings.national.distance, { rank: 1, value: Math.round(result.distance_m * 1000) / 1000 })
+  assert.equal(standings.provinces[0].display_name, '上海市')
+  assert.equal(standings.provinces[0].area_m2, 10000)
+  assert.equal(standings.provinces[0].total_area_m2, 10000)
+  assert.ok(standings.provinces[0].distance_m > 399)
+  assert.equal(standings.provinces[0].total_distance_m, standings.provinces[0].distance_m)
   assert.equal((await call('achievements', {}, {})).error.code, 'login_required')
   assert.equal((await call('achievements', { player_id: other.player_id })).records.peak_area.run_id, run_id)
   assert.equal((await call('achievements', { player_id: account.player_id }, bob)).records.peak_area, null)

@@ -2,7 +2,9 @@
 
 const { createHash } = require('node:crypto')
 const { analyzeRunTrack } = require('./track')
-const { provinceDistances, groupCityDistances, addLand, addDistance, publishScores } = require('./score-totals')
+const { provinceDistances, groupCityDistances, claimedProvinceUnits, addLand, addDistance, publishScores,
+  AREA_UNITS, DISTANCE_UNITS, scoreKey } = require('./score-totals')
+const { catalog } = require('./regions')
 const { buildLossReports, publishLossReports, lossReports, lossReportBoundary } = require('./reports')
 const { runStats, runHistory, runPeriod } = require('./run-statistics')
 const { achievements, runPerformance, publishAchievements } = require('./achievements')
@@ -181,6 +183,13 @@ function createRuns(repo, grid) {
           holdings = settled.holdings
         }
         nextRun.province_distances = provinceDistances(grid, track.paths)
+        // Keep the province board's net change, including its rounding when parcels split or merge.
+        nextRun.province_area_units = {}
+        if (result.outcomes.some(row => row.outcome === 'claimed')) {
+          for (const row of scores.values()) {
+            if (row.board === 'province' && row.area_units > 0) nextRun.province_area_units[row.subject] = row.area_units
+          }
+        }
         nextRun.score_version = 1
         addDistance(scores, player, analysis.distance_m, nextRun.province_distances)
         nextRun.ended_at = endedAt
@@ -260,6 +269,55 @@ function createRuns(repo, grid) {
     return { player_id: player, ...holdings }
   }
 
+  async function recordedProvinceDistances(run, meters, key) {
+    if (run.province_distances) return run.province_distances
+    if (run.city_distances) return groupCityDistances(run.city_distances)
+    // Only old runs without a regional breakdown need the full GPS track.
+    const points = run.points || (await repo.get(key)).points
+    const fixes = grid.validFixes(run.started_at, run.ended_at, await unpack(repo, points))
+    const path = fixes.map(p => grid.toXY(p.latitude, p.longitude))
+    const provinces = provinceDistances(grid, [path])
+    let measured = 0
+    for (let i = 1; i < path.length; i++) measured += grid.measureDistance(path[i - 1], path[i])
+    for (const code of Object.keys(provinces)) provinces[code] *= meters / measured
+    return provinces
+  }
+
+  async function shareStandings(player, runId) {
+    const key = keyFor('r', runId)
+    const run = owned(await repo.getRunShareSummary(key), player)
+    if (run.ended_at == null || run.discarded_at != null) fail(404, 'run_not_found', '找不到这场跑步')
+    let areas = run.province_area_units
+    let result
+    if (!areas) {
+      const receipt = await repo.getRunResult(key)
+      result = await readRunResult(repo, receipt.result)
+      areas = claimedProvinceUnits(grid, result.outcomes || [])
+    }
+    const distances = await recordedProvinceDistances(run, result?.distance_m, key)
+    async function national(metric) {
+      const { entries } = await repo.scoreBoard(metric, 'national')
+      const own = entries.find(row => row.subject === player)
+      return own ? { rank: own.rank, value: own.value } : null
+    }
+    const provinces = []
+    for (const { code, name } of catalog) {
+      const area = areas[code] || 0
+      const distance = Math.round((distances[code] || 0) * DISTANCE_UNITS)
+      if (!area && !distance) continue
+      provinces.push({ region_code: code, display_name: name, distance_m: distance / DISTANCE_UNITS, area_m2: area / AREA_UNITS })
+    }
+    async function withProvinceTotal(row) {
+      const total = await repo.getScore(scoreKey('province', row.region_code))
+      if (!total) return null
+      return { ...row, total_distance_m: total.distance_units / DISTANCE_UNITS, total_area_m2: total.area_units / AREA_UNITS }
+    }
+    const [distance, area, totals] = await Promise.all([
+      national('distance'), national('area'), Promise.all(provinces.map(withProvinceTotal))
+    ])
+    return { national: { distance, area }, provinces: totals.filter(Boolean) }
+  }
+
   // Administrative initialization/verification only. Normal board reads use the score index.
   async function scoreBaseline() {
     const totals = new Map()
@@ -271,23 +329,14 @@ function createRuns(repo, grid) {
     for await (const run of repo.finishedRuns(true)) {
       const { distance_m: meters } = await unpack(repo, run.result)
       if (!meters) continue
-      let provinces = run.province_distances
-      if (!provinces && run.city_distances) provinces = groupCityDistances(run.city_distances)
-      if (!provinces) {
-        const fixes = grid.validFixes(run.started_at, run.ended_at, await unpack(repo, run.points))
-        const path = fixes.map(p => grid.toXY(p.latitude, p.longitude))
-        provinces = provinceDistances(grid, [path])
-        let measured = 0
-        for (let i = 1; i < path.length; i++) measured += grid.measureDistance(path[i - 1], path[i])
-        for (const code of Object.keys(provinces)) provinces[code] *= meters / measured
-      }
+      const provinces = await recordedProvinceDistances(run, meters)
       addDistance(totals, run.player_id, meters, provinces)
     }
     return [...totals.values()]
   }
 
   return {
-    start, get, territories, playerSummary, scoreBaseline,
+    start, get, territories, playerSummary, scoreBaseline, shareStandings,
     achievements: player => achievements(repo, player),
     runningSummary: player => runStats(repo, unpack, player),
     runStats: (player, event, now) => runStats(repo, unpack, player, runPeriod(event, now)),

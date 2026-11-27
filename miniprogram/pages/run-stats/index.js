@@ -197,7 +197,9 @@ Page({
 
   openRun(event) {
     if (this.data.player !== api.playerId()) return this.refresh()
-    const id = event.currentTarget.dataset.id
-    if (this.data.rows.some(row => row.id === id)) wx.navigateTo({ url: '/pages/result/index?run_id=' + encodeURIComponent(id) })
+    const { id, share } = event.currentTarget.dataset
+    if (!this.data.rows.some(row => row.id === id)) return
+    const url = '/pages/result/index?run_id=' + encodeURIComponent(id)
+    wx.navigateTo({ url: share ? url + '&share=1' : url })
   }
 })

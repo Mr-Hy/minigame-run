@@ -86,12 +86,16 @@
         <text wx:else class="chart-note">共 {{summary.count}} 次</text>
       </view>
       <view class="history-list" wx:if="{{rows.length}}">
-        <button wx:for="{{rows}}" wx:key="id" class="run" data-id="{{item.id}}" bindtap="openRun">
-          <view class="run-main"><text class="run-date">{{item.date}}</text><text class="run-sub">{{item.time}} 结束</text></view>
-          <view class="run-metrics"><text class="run-distance">{{item.km}}<text class="small-unit"> 公里</text></text>
-            <text class="run-sub">{{item.duration}}{{item.pace === '—' ? '' : ' · ' + item.pace + '/公里'}}</text></view>
-          <view class="chevron"></view>
-        </button>
+        <view wx:for="{{rows}}" wx:key="id" class="run-row">
+          <button class="run" data-id="{{item.id}}" bindtap="openRun">
+            <view class="run-main"><text class="run-date">{{item.date}}</text><text class="run-sub">{{item.time}} 结束</text></view>
+            <view class="run-metrics"><text class="run-distance">{{item.km}}<text class="small-unit"> 公里</text></text>
+              <text class="run-sub">{{item.duration}}{{item.pace === '—' ? '' : ' · ' + item.pace + '/公里'}}</text></view>
+            <view class="chevron"></view>
+          </button>
+          <button class="run-share" aria-label="分享{{item.date}}{{item.time}}的跑步记录"
+            data-id="{{item.id}}" data-share="{{true}}" bindtap="openRun">分享</button>
+        </view>
       </view>
       <view wx:if="{{historyError}}" class="state"><text>{{historyError}}</text><button bindtap="retryHistory" class="action">重试读取明细</button></view>
       <view wx:elif="{{historyLoading}}" class="history-state">正在读取明细…</view>

@@ -4,6 +4,9 @@
 .scoreboard { display: flex; padding: 38rpx 14rpx; border-radius: 24rpx; background: #204d3c; color: #f5f5e9; }
 .metric { flex: 1; display: flex; flex-direction: column; padding-left: 20rpx; font-size: 23rpx; color: #d0dfc9; }
 .value { color: #fffdf5; font-size: 49rpx; font-weight: 650; font-variant-numeric: tabular-nums; margin-bottom: 4rpx; }
+.share-action { width: 100% !important; margin: 16rpx 0 0; padding: 16rpx; border-radius: 16rpx; background: #e5ebdd; color: #23543d; font-size: 28rpx; line-height: 1.6; }
+.share-hint { margin-top: 12rpx; }
+.share-canvas { position: fixed; left: -2000px; top: 0; width: 360px; height: 380px; pointer-events: none; }
 .section-title { font-size: 36rpx; font-weight: 650; }
 .section-head, .legend, .row, .pagination { display: flex; align-items: center; justify-content: space-between; }
 .section-head { gap: 10rpx; margin: 40rpx 0 18rpx; }
@@ -14,6 +17,20 @@
 .chip-area { font-weight: 650; font-variant-numeric: tabular-nums; }
 .chip.active { background: #245740; color: white; }
 .outcome-map { display: block; width: 100%; height: 330rpx; border-radius: 18rpx; margin-bottom: 18rpx; }
+.route-stage { position: relative; width: 100%; height: 390rpx; border-radius: 18rpx; overflow: hidden; margin-bottom: 18rpx; }
+.route-map, .replay-canvas { display: block; width: 100%; height: 100%; }
+.replay-canvas { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; }
+.replay-controls { display: flex; align-items: center; gap: 14rpx; }
+.replay-bar { flex: 1; height: 8rpx; overflow: hidden; border-radius: 8rpx; background: #e1e5da; }
+.replay-fill { height: 100%; background: #be542a; border-radius: inherit; }
+.replay-percent { min-width: 62rpx; text-align: right; color: #596c60; font-size: 24rpx; font-variant-numeric: tabular-nums; }
+.route-replay { width: 142rpx; margin: 0; padding: 8rpx 0; border-radius: 12rpx; background: #e6eade; color: #245740; font-size: 24rpx; line-height: 1.6; }
+.route-key, .route-status { display: flex; align-items: center; gap: 20rpx; }
+.route-key { color: #596c60; font-size: 24rpx; }
+.route-key text::before { content: ''; display: inline-block; width: 15rpx; height: 15rpx; margin-right: 7rpx; border-radius: 50%; }
+.start-key::before { background: #245740; }
+.end-key::before { background: #be542a; }
+.route-retry { flex: none; margin: 0; color: #245740; background: #e6eade; }
 .row-active { background: #f1e8d8; }
 .ledger { margin-top: 28rpx; }
 .legend { padding-bottom: 12rpx; font-size: 22rpx; }

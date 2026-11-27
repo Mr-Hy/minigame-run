@@ -70,7 +70,9 @@ page { background: #f7f6ef; color: #193e30; }
 .journal .logged-day { text-decoration: underline; text-underline-offset: 6rpx; }
 .chart-foot { padding-top: 12rpx; font-size: 21rpx; }
 .history-heading { margin: 29rpx 2rpx 8rpx; }
-.journal .run { display: flex; align-items: center; gap: 20rpx; width: 100%; padding: 21rpx 3rpx; text-align: left; border-bottom: 1rpx solid #d8dfd1; }
+.run-row { display: flex; align-items: center; gap: 20rpx; border-bottom: 1rpx solid #d8dfd1; }
+.journal .run { display: flex; flex: 1; align-items: center; gap: 16rpx; padding: 21rpx 3rpx; text-align: left; }
+.journal .run-share { flex: none; padding: 18rpx 20rpx; border-radius: 14rpx; background: #e5ebdd; color: #23543d; font-size: 24rpx; }
 .run-main, .run-metrics { display: flex; flex-direction: column; gap: 5rpx; }
 .run-metrics { margin-left: auto; align-items: flex-end; }
 .run-sub { font-size: 22rpx; }

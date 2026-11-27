@@ -132,9 +132,11 @@ function createHandler(grid, runs, accounts, lossNotices, now = () => Date.now()
         case 'start':
         case 'append':
         case 'finish':
+        case 'shareStandings':
         case 'getRun': {
           const id = event.run_id
           if (typeof id !== 'string' || !RUN_ID.test(id)) fail('invalid_run_id', '跑步编号须为 1 至 96 位字母、数字、下划线或短横线')
+          if (action === 'shareStandings') return await runs.shareStandings(player_id, id)
           if (action === 'getRun') return await runs.get(player_id, id, event.include_points !== false)
           if (action === 'start') {
             const first = point(event.first_point)

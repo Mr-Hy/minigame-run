@@ -1,5 +1,6 @@
 const { heightFor, frontEdges, labelClearance, wallPoint } = require('./relief-geometry')
 const { ownTerritory } = require('./territory-theme')
+const { trackSegments, trackEnds, createTrackPlayback, playbackFrame } = require('./track-playback')
 
 // 微信原生地图使用 GCJ-02 经纬度对象，GeoJSON 使用 [经度, 纬度]。
 function nativePoint(coordinate) {
@@ -173,6 +174,10 @@ function frame(features) {
       south = Math.min(south, y); north = Math.max(north, y)
     }
   }
+  return paddedBounds(west, east, south, north)
+}
+
+function paddedBounds(west, east, south, north) {
   const padX = Math.max((east - west) * 0.09, 0.000015)
   const padY = Math.max((north - south) * 0.09, 0.000015)
   return [{ longitude: west - padX, latitude: south - padY },
@@ -186,18 +191,30 @@ function areaText(value) {
 }
 
 function trackLines(points) {
-  const segments = []
-  let line, previous
-  for (const p of points) {
-    if (p.accuracy < 0 || p.accuracy > 50) continue
-    if (!line || p.timestamp - previous.timestamp >= 60) {
-      line = { points: [], color: '#BE542A', width: 5, borderColor: '#FFFDF3', borderWidth: 1 }
-      segments.push(line)
+  return trackSegments(points).filter(segment => segment.points.length > 1)
+}
+
+function recordedTrackMap(points, start, end) {
+  const segments = trackSegments(points, start, end)
+  if (!segments.length) return null
+  const lines = [], circles = []
+  const first = segments[0].points[0]
+  const tail = segments[segments.length - 1].points
+  const last = tail[tail.length - 1]
+  let west = first.longitude, east = west, south = first.latitude, north = south
+  for (const line of segments) {
+    if (line.points.length > 1) lines.push(line)
+    else if (line.points[0] !== first && line.points[0] !== last) {
+      circles.push({ ...line.points[0], radius: 4, fillColor: line.color, color: '#FFFFFF', strokeWidth: 1 })
     }
-    line.points.push({ latitude: p.latitude, longitude: p.longitude })
-    previous = p
+    for (const p of line.points) {
+      west = Math.min(west, p.longitude); east = Math.max(east, p.longitude)
+      south = Math.min(south, p.latitude); north = Math.max(north, p.latitude)
+    }
   }
-  return segments.filter(segment => segment.points.length > 1)
+  circles.push(...trackEnds(first, last))
+  return { lines, circles, bounds: paddedBounds(west, east, south, north),
+    latitude: (south + north) / 2, longitude: (west + east) / 2 }
 }
 
 function durationText(seconds) {
@@ -216,4 +233,4 @@ function runnerLabel(number) {
   return '跑者 #' + number
 }
 
-module.exports = { inBounds, territoryAt, territoryLayers, pickTerritorySurface, outcomeLayers, frame, areaText, trackLines, durationText, ownerText, runnerLabel }
+module.exports = { inBounds, territoryAt, territoryLayers, pickTerritorySurface, outcomeLayers, frame, areaText, trackLines, recordedTrackMap, createTrackPlayback, playbackFrame, durationText, ownerText, runnerLabel, mercatorY }

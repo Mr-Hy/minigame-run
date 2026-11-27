@@ -84,6 +84,18 @@ function provinceLandUnits(grid, land) {
   return totals
 }
 
+function claimedProvinceUnits(grid, outcomes) {
+  const totals = {}
+  for (const { outcome, geometry, area_m2 } of outcomes) {
+    if (outcome !== 'claimed' || geometry?.type !== 'Polygon' || !(area_m2 > 0)) continue
+    const shape = geometry.coordinates.map(ring => ring.map(([lng, lat]) => grid.toXY(lat, lng)))
+    for (const [code, units] of Object.entries(provinceLandUnits(grid, { shape, area_m2 }))) {
+      totals[code] = (totals[code] || 0) + units
+    }
+  }
+  return totals
+}
+
 function addLand(changes, grid, land, sign) {
   addScore(changes, 'national', land.owner, sign * Math.round(land.area_m2 * AREA_UNITS), 0)
   const provinces = land.province_area_units || provinceLandUnits(grid, land)
@@ -128,6 +140,6 @@ async function publishScores(tx, changes, runId, endedAt) {
 }
 
 module.exports = {
-  scoreKey, scorePeriods, periodBoard, AREA_UNITS, DISTANCE_UNITS, provinceDistances, groupCityDistances, provinceLandUnits,
+  scoreKey, scorePeriods, periodBoard, AREA_UNITS, DISTANCE_UNITS, provinceDistances, groupCityDistances, provinceLandUnits, claimedProvinceUnits,
   addLand, addDistance, publishScores
 }

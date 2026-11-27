@@ -60,6 +60,11 @@ async function runner(t, player) {
       pace_s_per_km: 300, area_m2: 0, max_gap_s: 5, outcomes: [], achievement_updates: session.updates }
     return session.result
   })
+  t.mock.method(api, 'getRun', async (id, owner) => {
+    assert.equal(id, session.result.run_id)
+    assert.equal(owner, session.result.player_id)
+    return { result: session.result, points: [] }
+  })
   const run = mount(runPage)
   t.after(() => { run.onUnload(); global.wx = previous })
   await run.onShow()
@@ -86,7 +91,6 @@ test('完赛合并展示新建、刷新及跨档里程碑，切号和历史查�
   assert.equal(latest.data.achievementPopup, false)
   session.player = 'mixed-runner'
 
-  t.mock.method(api, 'getRun', async () => ({ result: session.result }))
   const history = mount(resultPage, { run_id: session.result.run_id })
   await history.onShow()
   assert.equal(history.data.achievementPopup, false)

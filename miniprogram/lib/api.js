@@ -202,7 +202,8 @@ module.exports = {
   achievements: player => authenticated('achievements', {}, player),
   runStats: (query, player) => authenticated('runStats', query, player),
   runHistory: (query, player) => authenticated('runHistory', query, player),
-  getRun: (id, player) => authenticated('getRun', { run_id: id, include_points: false }, player),
+  shareStandings: (id, player) => authenticated('shareStandings', { run_id: id }, player),
+  getRun: (id, player, includePoints = false) => authenticated('getRun', { run_id: id, include_points: includePoints }, player),
   start: (id, firstPoint, playerId) => authenticated('start', { run_id: id, first_point: firstPoint }, playerId),
   append: (id, points, playerId) => authenticated('append', { run_id: id, points }, playerId),
   finish: (id, endedAt, points, playerId) => authenticated('finish', { run_id: id, ended_at: endedAt, points }, playerId)

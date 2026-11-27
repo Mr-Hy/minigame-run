@@ -53,6 +53,13 @@ function createRepository(db) {
       }).get()
       return data ? data.value : null
     },
+    async getRunShareSummary(key) {
+      const { data } = await db.collection(COLLECTION).doc(key).field({
+        'value.player_id': true, 'value.started_at': true, 'value.ended_at': true, 'value.discarded_at': true,
+        'value.province_distances': true, 'value.city_distances': true, 'value.province_area_units': true
+      }).get()
+      return data ? data.value : null
+    },
     async inlineRunTotals(player, boundaries) {
       const $ = db.command.aggregate
       const metrics = '$value.result.value.'

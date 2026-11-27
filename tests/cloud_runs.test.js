@@ -15,7 +15,8 @@ function repository() {
   const get = async id => structuredClone(docs.get(id) ?? null)
   const set = async (id, data) => { docs.set(id, structuredClone(data)) }
   return {
-    get, set, docs, scores,
+    get, getRunResult: get, getRunShareSummary: get, set, docs, scores,
+    getScore: async id => structuredClone(scores.get(id) ?? null),
     async getMapView(key) {
       const map = docs.get(key)
       if (!map) return null
@@ -654,6 +655,68 @@ test('穿沪苏边界的地块和两次同时提交的跑步都按实际省份�
   assert.equal(owner.distance_units,[loop,...end].reduce((sum,r) => sum + Math.round(r.distance_m*DISTANCE_UNITS),0))
   const shanghai = repo.scores.get(scoreKey('province','310000'))
   assert.equal(shanghai.distance_units,both[0].distance_units + 600*DISTANCE_UNITS)
+})
+
+test('分享成绩按真实省界拆分，保留历史贡献，并从累计榜读取当前名次与全省总量', async () => {
+  const repo = repository(), runs = createRuns(repo, grid)
+  const [x, y] = grid.toXY(31.724751, 121.151915)
+  async function finish(player, id, interval) {
+    const path = square.map(([dx, dy], i) => fix(1000 + interval * i, x + dx - 50, y + dy - 50))
+    await runs.start(player, id, 1000, path[0])
+    return runs.finish(player, id, path.at(-1).timestamp, path)
+  }
+  await finish('A', 'border-share', 25)
+  const claimed = await runs.shareStandings('A', 'border-share')
+  assert.deepEqual(claimed.provinces.map(row => row.display_name), ['上海市', '江苏省'])
+  for (const row of claimed.provinces) {
+    const total = repo.scores.get(scoreKey('province', row.region_code))
+    assert.equal(row.area_m2, total.area_units / AREA_UNITS)
+    assert.equal(row.distance_m, total.distance_units / DISTANCE_UNITS)
+    assert.ok(row.area_m2 > 0 && row.distance_m > 0)
+  }
+  assert.equal(claimed.national.distance.rank, 1)
+  assert.equal(claimed.national.area.value, repo.scores.get(scoreKey('national', 'A')).area_units / AREA_UNITS)
+
+  await finish('B', 'capture-share', 15)
+  await finish('B', 'defend-share', 15)
+  for (const id of ['capture-share', 'defend-share']) {
+    const { provinces } = await runs.shareStandings('B', id)
+    assert.ok(provinces.every(row => row.area_m2 === 0 && row.distance_m > 0))
+  }
+  const doc = [...repo.docs.values()].find(row => row.run_id === 'border-share')
+  delete doc.province_area_units
+  const old = await runs.shareStandings('A', 'border-share')
+  assert.equal(old.national.distance.rank, 2)
+  assert.equal(old.national.area, null)
+  for (const [i, row] of old.provinces.entries()) {
+    assert.deepEqual(row, { ...claimed.provinces[i], total_distance_m: Math.round(row.distance_m * 3 * DISTANCE_UNITS) / DISTANCE_UNITS })
+  }
+})
+
+test('分享拒绝他人、进行中、舍弃的跑步，全国 500 名之外不返回名次', async t => {
+  const repo = repository(), runs = createRuns(repo, grid)
+  await runs.start('A', 'open-share', 1000, fix(1000))
+  const boards = t.mock.method(repo, 'scoreBoard')
+  for (const player of ['A', 'B']) await assert.rejects(runs.shareStandings(player, 'open-share'), { code: 'run_not_found' })
+  await runs.finish('A', 'open-share', 1005, [fix(1005, 5)])
+  await assert.rejects(runs.shareStandings('A', 'open-share'), { code: 'run_not_found' })
+  await runs.start('A', 'short-share', 1000, fix(1000))
+  await runs.finish('A', 'short-share', 1060, [fix(1060, 300)])
+  await assert.rejects(runs.shareStandings('B', 'short-share'), { code: 'run_not_found' })
+  assert.equal(boards.mock.callCount(), 0)
+  for (let i = 0; i < 500; i++) {
+    const subject = 'ahead' + i
+    repo.scores.set(scoreKey('national', subject), { board: 'national', subject, distance_units: 301000 })
+  }
+  const readResult = t.mock.method(repo, 'getRunResult', () => assert.fail('本次和全省汇总足够生成分享数据'))
+  const { national, provinces } = await runs.shareStandings('A', 'short-share')
+  assert.deepEqual(national, { distance: null, area: null })
+  assert.deepEqual(provinces[0], { region_code: '310000', display_name: '上海市', distance_m: 300,
+    area_m2: 0, total_distance_m: 300, total_area_m2: 0 })
+  readResult.mock.restore()
+  delete [...repo.docs.values()].find(row => row.run_id === 'short-share').province_area_units
+  repo.scores.delete(scoreKey('province', '310000'))
+  assert.deepEqual((await runs.shareStandings('A', 'short-share')).provinces, [])
 })
 
 test('失地边界按需复用不可变结果块，保留孔，超出点数或字节上限只返回标记', async () => {
